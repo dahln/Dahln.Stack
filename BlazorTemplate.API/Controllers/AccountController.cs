@@ -128,7 +128,7 @@ public class AccountController : Controller
 
     [Authorize(Roles = "Administrator")]
     [HttpGet]
-    [Route("api/v1/user/{userId}")]
+    [Route("api/v1/user/{userId}/role/administrator")]
     async public Task<IActionResult> ToggleUserAdministratorRole(string userId)
     {
         string currentUserId = User.GetUserId();

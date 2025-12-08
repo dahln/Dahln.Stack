@@ -227,7 +227,7 @@
 
     async private Task ToggleAdministrator(BlazorTemplate.Dto.User user)
     {
-        await API.GetAsync($"api/v1/user/{user.Id}");
+        await API.GetAsync($"api/v1/user/{user.Id}/role/administrator");
     }
 
     async private Task DeleteUser(BlazorTemplate.Dto.User user)
