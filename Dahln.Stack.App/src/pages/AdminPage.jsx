@@ -181,7 +181,7 @@ export default function AdminPage() {
             {items.map((item) => (
               <tr key={item.id}>
                 <td>
-                  <h6 className="mb-0">{item.email}</h6>
+                  <h6 className="mb-0 px-2">{item.email}</h6>
                 </td>
                 <td>
                   <Form.Check
