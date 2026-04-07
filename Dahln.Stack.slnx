@@ -1,0 +1,13 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="Dahln.Stack.API/Dahln.Stack.API.csproj" />
+  <Project Path="Dahln.Stack.Database/Dahln.Stack.Database.csproj" />
+  <Project Path="Dahln.Stack.Dto/Dahln.Stack.Dto.csproj" />
+  <Project Path="Dahln.Stack.Service/Dahln.Stack.Service.csproj" />
+  <Project Path="Dahln.Stack.Test/Dahln.Stack.Test.csproj" />
+</Solution>
+

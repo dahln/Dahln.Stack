@@ -1,0 +1,437 @@
+### API Path for Local.
+@Dahln.API_HostAddress = https://localhost:7267
+
+
+
+###
+################################## IDENTITY METHODS
+
+
+
+### Register with 'Regular' user
+POST {{Dahln.API_HostAddress}}/register
+Content-Type: application/json
+
+{
+  "email": "test1@example.com",
+  "password": "TestPassword@1"
+}
+
+### Login with Cookies as 'Regular' user
+POST {{Dahln.API_HostAddress}}/login?useCookies=true&useSessionCookies=true
+Content-Type: application/json
+
+{
+  "email": "test1@example.com",
+  "password": "TestPassword@1"
+}
+
+
+### Register with 'Administrator' user
+POST {{Dahln.API_HostAddress}}/register
+Content-Type: application/json
+
+{
+  "email": "administrator@example.com",
+  "password": "TestPassword@1"
+}
+
+### Login with Cookies as 'Administrator' user
+POST {{Dahln.API_HostAddress}}/login?useCookies=true&useSessionCookies=true
+Content-Type: application/json
+
+{
+  "email": "administrator@example.com",
+  "password": "TestPassword@1"
+}
+
+
+
+### Logout
+GET {{Dahln.API_HostAddress}}/api/v1/account/logout
+Content-Type: application/json
+
+
+
+### Confirm Email Address. Pass userId and code as query parameters.
+GET {{Dahln.API_HostAddress}}/confirmEmail?userId=[USER-ID]&code=[CODE]
+
+
+### Resend confirmation email. POST The email address of the user that needs to 
+POST {{Dahln.API_HostAddress}}/resendConfirmationEmail
+Content-Type: application/json
+
+{
+  "email": "test1@example.com"
+}
+
+
+### User fotgot their password. POST their email and to send them a recovery email.
+### IMPORTANT: A user must have 'Confirmed' their email before doing a password forget/reset.
+### IMPORTANT: Prior to sending this request call /api/v1/account/operations/recovery to see if the Email System is configured.
+POST {{Dahln.API_HostAddress}}/forgotPassword
+Content-Type: application/json
+
+{
+  "email": "test1@example.com"
+}
+
+### Received an email with the 'ResetCode' Send the reset code, their current Email address, and the new password.
+POST {{Dahln.API_HostAddress}}/resetpassword
+Content-Type: application/json
+
+{
+  "email": "test1@example.com",
+  "resetCode": "[CODE]",
+  "newPassword": "TestPassword@123"
+}
+
+
+### Get the current user's Email and info.
+GET {{Dahln.API_HostAddress}}/manage/info
+Content-Type: application/json
+
+
+
+### Allow the current user to change their password. 
+POST {{Dahln.API_HostAddress}}/manage/info
+Content-Type: application/json
+
+{
+  "email": "test1@example.com",
+  "oldPassword": "TestPassword@123",
+  "newPassword": "TestPassword@1"
+}
+
+
+
+### 2FA Setup: Step 1: Send an enable request. You will get something like this:
+# {
+#   "sharedKey": "[STRING]",
+#   "recoveryCodesLeft": 0,
+#   "recoveryCodes": null,
+#   "isTwoFactorEnabled": false,
+#   "isMachineRemembered": false
+# }
+POST {{Dahln.API_HostAddress}}/manage/2fa
+Content-Type: application/json
+
+{
+
+}
+
+
+### 2FA Setup: Step 2: Add the Shared Key to your Authenticator App manually
+### OR
+### Generate a QR code that can be scanned (This is C# - adjust for TypeScript): 
+# string authenticatorUriFormat = "otpauth://totp/{0}:{1}?secret={2}&issuer={0}&digits=6";
+
+# var qrContent = string.Format(
+#                     authenticatorUriFormat,
+#                     "Dahln",
+#                     CurrentEmail,
+#                     code);
+
+# QRCodeGenerator qrGenerator = new QRCodeGenerator();
+# QRCodeData qrCodeData = qrGenerator.CreateQrCode(qrContent, QRCodeGenerator.ECCLevel.H);
+
+# PngByteQRCode qrCode = new PngByteQRCode(qrCodeData);
+# var qrCodeAsPng = qrCode.GetGraphic(10);
+# string QrUri = string.Format("data:image/png;base64,{0}", Convert.ToBase64String(qrCodeAsPng));
+
+
+
+### 2FA Setup: Step 3: Use the newly-configured Authenticator App to get the current validation code and send it back to the API:
+### This will give you a response. The use can use these codes for 2FA:
+### {
+#   "sharedKey": "[STRING]",
+#   "recoveryCodesLeft": 10,
+#   "recoveryCodes": [
+#     "XXXXX-XXXXX",
+#     "XXXXX-XXXXX",
+#     "XXXXX-XXXXX",
+#     "XXXXX-XXXXX",
+#     "XXXXX-XXXXX",
+#     "XXXXX-XXXXX",
+#     "XXXXX-XXXXX",
+#     "XXXXX-XXXXX",
+#     "XXXXX-XXXXX",
+#     "XXXXX-XXXXX"
+#   ],
+#   "isTwoFactorEnabled": true,
+#   "isMachineRemembered": false
+#### }
+POST {{Dahln.API_HostAddress}}/manage/2fa
+Content-Type: application/json
+
+{
+  "enable": true,
+  "twoFactorCode": "433937"
+}
+
+
+### 2FA Setup: Step 4: Calling /api/v1/accoun/2fa will tell you if the 2fa is enabled
+
+
+### 2FA Setup: Step 5: Login. Refer to login requests up above, but now you need to pass the 2fa code from the authenticator app.
+### If a 2fa-enabled user attempts to sign in without their 2fa code, they will get a 401 response, and the "detail" will say: "RequiresTwoFactor"
+POST {{Dahln.API_HostAddress}}/login?useCookies=true&useSessionCookies=true
+Content-Type: application/json
+
+{
+  "email": "test1@example.com",
+  "password": "TestPassword@1",
+  "twoFactorCode": "033306"
+}
+
+
+### 2FA: Use a recovery 2FA code:
+POST {{Dahln.API_HostAddress}}/login?useCookies=true&useSessionCookies=true
+Content-Type: application/json
+
+{
+  "email": "test1@example.com",
+  "password": "TestPassword@1",
+  "twoFactorRecoveryCode": "XXXXX-XXXXX"
+}
+
+
+
+### 2FA: Disable 2FA
+POST {{Dahln.API_HostAddress}}/manage/2fa
+Content-Type: application/json
+
+{
+  "enable": false
+}
+
+###
+################################## SUPPLEMENTAL IDENTITY METHODS
+
+### Logout
+GET {{Dahln.API_HostAddress}}/api/v1/account/logout
+Content-Type: application/json
+
+### Delete Current Account
+DELETE {{Dahln.API_HostAddress}}/api/v1/account
+Content-Type: application/json
+
+### Does Account Exist
+POST {{Dahln.API_HostAddress}}/api/v1/account/exists
+Content-Type: application/json
+
+{
+  "email": "test4@example.com"
+}
+
+### Check to see if account recovery operations are allowed - reviews a valid Email System integration (SMTP2GO API).
+GET {{Dahln.API_HostAddress}}/api/v1/account/operations/recovery
+Content-Type: application/json
+
+
+### Get current user roles.
+GET {{Dahln.API_HostAddress}}/api/v1/account/roles
+Content-Type: application/json
+
+
+### Check if current user has 2FA enabled
+GET {{Dahln.API_HostAddress}}/api/v1/account/2fa
+Content-Type: application/json
+
+
+### Administrator: Toggle the user as an administrator or disable.
+GET {{Dahln.API_HostAddress}}/api/v1/user/[USER-ID]/role/administrator
+Content-Type: application/json
+
+
+### Administrator: Delete user by Id
+DELETE {{Dahln.API_HostAddress}}/api/v1/user/[USER-ID]
+Content-Type: application/json
+
+
+### Administrator: Update system settings with email config
+### TODO: Setup your own SMTP2GO account and add your SMTP2GO key and the email address you will use to send emails from the system.
+PUT {{Dahln.API_HostAddress}}/api/v1/settings
+Content-Type: application/json
+
+{
+  "EmailApiKey": "[API-KEY]",
+  "SystemEmailAddress": "system@example.com"
+}
+
+
+### Administrator: Update just the System Email Address.
+PUT {{Dahln.API_HostAddress}}/api/v1/settings
+Content-Type: application/json
+
+{
+  "EmailApiKey": "--- NOT DISPLAYED FOR SECURITY ---",
+  "SystemEmailAddress": "system1@example.com"
+}
+
+
+### Administrator: Update just the System Email Address.
+PUT {{Dahln.API_HostAddress}}/api/v1/settings
+Content-Type: application/json
+
+{
+  "EmailApiKey": "",
+  "SystemEmailAddress": "system2@example.com"
+}
+
+
+### Administrator: Clear system settings by passing null.
+PUT {{Dahln.API_HostAddress}}/api/v1/settings
+Content-Type: application/json
+
+{
+  "EmailApiKey": null,
+  "SystemEmailAddress": null
+}
+
+
+### Administrator: Get the current system settings, useful for a page that would mange system settings.
+GET {{Dahln.API_HostAddress}}/api/v1/settings
+Content-Type: application/json
+
+
+### Administrator: Search Users
+POST {{Dahln.API_HostAddress}}/api/v1/users
+Content-Type: application/json
+
+{
+  "filterText": null,
+  "pageNumber": 0,
+  "pageSize": 5,
+  "sortBy": "string",
+  "sortDirection": 1
+}
+
+
+
+
+
+
+
+
+
+
+###
+################################## CUSTOMER METHODS
+# NOTE: You must be logged in (authenticated) to use customer endpoints
+# 1. First register a user account using the register endpoint below
+# 2. Then login using the login endpoint to get authentication cookies
+# 3. Replace REPLACE_WITH_CUSTOMER_ID with actual customer IDs from API responses
+# 4. Gender values: 0 = Unknown, 1 = Male, 2 = Female
+# 5. SortDirection values: 0 = Ascending, 1 = Descending
+
+### Create a new Customer
+POST {{Dahln.API_HostAddress}}/api/v1/customer
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "john.doe@example.com",
+  "phone": "555-123-4567",
+  "birthDate": "1990-01-15T00:00:00.000Z",
+  "address": "123 Main St",
+  "city": "Anytown",
+  "state": "CA",
+  "postal": "12345",
+  "notes": "This is a test customer",
+  "imageBase64": "",
+  "active": true,
+  "gender": 1
+}
+
+### Get Customer by ID (replace {customerId} with actual ID from create response)
+GET {{Dahln.API_HostAddress}}/api/v1/customer/[CUSTOMER-ID]
+Accept: application/json
+
+### Update Customer by ID (replace {customerId} with actual ID)
+PUT {{Dahln.API_HostAddress}}/api/v1/customer/[CUSTOMER-ID]
+Content-Type: application/json
+
+{
+  "name": "John Doe Updated",
+  "email": "john.doe.updated@example.com",
+  "phone": "555-987-6543",
+  "birthDate": "1990-01-15T00:00:00.000Z",
+  "address": "456 Oak Avenue",
+  "city": "New City",
+  "state": "NY",
+  "postal": "54321",
+  "notes": "Updated customer information",
+  "imageBase64": "",
+  "active": true,
+  "gender": 1
+}
+
+### Delete Customer by ID (replace {customerId} with actual ID)
+DELETE {{Dahln.API_HostAddress}}/api/v1/customer/[CUSTOMER-ID]
+Accept: application/json
+
+### Search Customers with filtering
+POST {{Dahln.API_HostAddress}}/api/v1/customers
+Content-Type: application/json
+
+{
+  "filterText": "john",
+  "pageNumber": 0,
+  "pageSize": 10,
+  "sortBy": "Name",
+  "sortDirection": 0
+}
+
+### Search Customers - Get all customers (no filter)
+POST {{Dahln.API_HostAddress}}/api/v1/customers
+Content-Type: application/json
+
+{
+  "filterText": null,
+  "pageNumber": 0,
+  "pageSize": 15,
+  "sortBy": "Name",
+  "sortDirection": 0
+}
+
+### Search Customers - Sort by State descending
+POST {{Dahln.API_HostAddress}}/api/v1/customers
+Content-Type: application/json
+
+{
+  "filterText": null,
+  "pageNumber": 0,
+  "pageSize": 15,
+  "sortBy": "State",
+  "sortDirection": 1
+}
+
+### Search Customers - Sort by Gender ascending
+POST {{Dahln.API_HostAddress}}/api/v1/customers
+Content-Type: application/json
+
+{
+  "filterText": null,
+  "pageNumber": 0,
+  "pageSize": 15,
+  "sortBy": "Gender",
+  "sortDirection": 0
+}
+
+### Search Customers - Sort by Active status
+POST {{Dahln.API_HostAddress}}/api/v1/customers
+Content-Type: application/json
+
+{
+  "filterText": null,
+  "pageNumber": 0,
+  "pageSize": 15,
+  "sortBy": "Active",
+  "sortDirection": 1
+}
+
+### Seed Customers with specific number
+GET {{Dahln.API_HostAddress}}/api/v1/seed/customers/10
+Accept: application/json
+

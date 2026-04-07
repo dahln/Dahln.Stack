@@ -1,0 +1,37 @@
+{
+  "name": "@dahln-stack/app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:watch": "vite build --watch",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "axios": "^1.14.0",
+    "bootstrap": "^5.3.8",
+    "bootstrap-icons": "^1.13.1",
+    "qrcode.react": "^4.2.0",
+    "react": "^19.2.4",
+    "react-bootstrap": "^2.10.10",
+    "react-dom": "^19.2.4",
+    "react-modal": "^3.16.3",
+    "react-router-dom": "^7.14.0",
+    "react-toastify": "^11.0.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "@vitejs/plugin-basic-ssl": "^2.1.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.4.0",
+    "vite": "^8.0.1"
+  }
+}

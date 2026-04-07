@@ -38,7 +38,8 @@ jobs:
       #     chmod 600 ~/.ssh/id_rsa
       #     sudo apt-get update && sudo apt-get upgrade -y
       #     sudo apt-get install -y sshpass openssh-client
-      #     dotnet publish BlazorTemplate.API -c Release 
-      #     scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -P ${{ secrets.SERVERPORT }} -r ${{ github.workspace }}/BlazorTemplate.API/bin/Release/net9.0/publish/* ${{ secrets.SERVERUSERNAME }}@${{ secrets.SERVERADDRESS }}:/var/www/BlazorWasmAndApiTemplate      
+      #     dotnet publish Dahln.API -c Release 
+      #     scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -P ${{ secrets.SERVERPORT }} -r ${{ github.workspace }}/Dahln.API/bin/Release/net9.0/publish/* ${{ secrets.SERVERUSERNAME }}@${{ secrets.SERVERADDRESS }}:/var/www/BlazorWasmAndApiTemplate      
       #     ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p ${{ secrets.SERVERPORT }} ${{ secrets.SERVERUSERNAME }}@${{ secrets.SERVERADDRESS }} "sudo systemctl restart kestrel-BlazorWasmAndApiTemplate.service"
       #     ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p ${{ secrets.SERVERPORT }} ${{ secrets.SERVERUSERNAME }}@${{ secrets.SERVERADDRESS }} "sudo systemctl restart nginx"
+
