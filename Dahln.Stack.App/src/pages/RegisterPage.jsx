@@ -4,9 +4,13 @@ import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { useAuth } from '../context/AuthContext'
 
+/**
+ * Account registration form.
+ */
 export default function RegisterPage() {
   const auth = useAuth()
   const navigate = useNavigate()
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -14,30 +18,32 @@ export default function RegisterPage() {
 
   async function handleSubmit(event) {
     event.preventDefault()
-    const messages = []
 
-    if (!email.trim()) {
-      messages.push('Email is required.')
+    const nextErrorList = []
+    const normalizedEmail = email.trim()
+
+    if (!normalizedEmail) {
+      nextErrorList.push('Email is required.')
     }
 
     if (!password.trim()) {
-      messages.push('Password is required.')
+      nextErrorList.push('Password is required.')
     }
 
     if (!confirmPassword.trim()) {
-      messages.push('Please confirm your password.')
+      nextErrorList.push('Please confirm your password.')
     }
 
     if (password !== confirmPassword) {
-      messages.push("Passwords don't match.")
+      nextErrorList.push("Passwords don't match.")
     }
 
-    if (messages.length > 0) {
-      setErrorList(messages)
+    if (nextErrorList.length > 0) {
+      setErrorList(nextErrorList)
       return
     }
 
-    const result = await auth.register(email.trim(), password)
+    const result = await auth.register(normalizedEmail, password)
     if (!result.succeeded) {
       setErrorList(result.errorList ?? ['Registration failed.'])
       return
@@ -58,12 +64,14 @@ export default function RegisterPage() {
           <Card.Header>
             <h2 className="h3 mb-0">Register</h2>
           </Card.Header>
+
           <Card.Body>
             {errorList.map((error) => (
               <Alert key={error} variant="danger">
                 {error}
               </Alert>
             ))}
+
             <Form onSubmit={handleSubmit} autoComplete="on">
               <Form.Group className="mb-3" controlId="registerEmail">
                 <Form.Label>Email</Form.Label>
@@ -75,6 +83,7 @@ export default function RegisterPage() {
                   onChange={(event) => setEmail(event.target.value)}
                 />
               </Form.Group>
+
               <Form.Group className="mb-3" controlId="registerPassword">
                 <Form.Label>Password</Form.Label>
                 <Form.Control
@@ -84,6 +93,7 @@ export default function RegisterPage() {
                   onChange={(event) => setPassword(event.target.value)}
                 />
               </Form.Group>
+
               <Form.Group className="mb-3" controlId="registerConfirmPassword">
                 <Form.Label>Retype Password</Form.Label>
                 <Form.Control
@@ -93,8 +103,10 @@ export default function RegisterPage() {
                   onChange={(event) => setConfirmPassword(event.target.value)}
                 />
               </Form.Group>
+
               <Button type="submit">Register</Button>
             </Form>
+
             <div className="mt-3">
               <Link to="/">
                 <strong>Have an account? Sign in here.</strong>

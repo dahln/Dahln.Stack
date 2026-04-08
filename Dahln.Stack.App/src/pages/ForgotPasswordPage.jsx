@@ -3,9 +3,12 @@ import { Button, Card, Col, Form, Row } from 'react-bootstrap'
 import { toast } from 'react-toastify'
 import { api } from '../services/apiClient'
 
+/**
+ * Starts the password reset flow.
+ */
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
-  const [disabled, setDisabled] = useState(false)
+  const [isDisabled, setIsDisabled] = useState(false)
 
   useEffect(() => {
     async function loadStatus() {
@@ -14,9 +17,10 @@ export default function ForgotPasswordPage() {
           redirectOnUnauthorized: false,
           showToast: false,
         })
-        setDisabled(response === false)
+
+        setIsDisabled(response === false)
       } catch {
-        setDisabled(true)
+        setIsDisabled(true)
       }
     }
 
@@ -25,25 +29,31 @@ export default function ForgotPasswordPage() {
 
   async function handleSubmit(event) {
     event.preventDefault()
-    const response = await api.post('forgotpassword', { email }, {
-      redirectOnUnauthorized: false,
-      showToast: true,
-    })
+
+    const response = await api.post(
+      'forgotpassword',
+      { email },
+      {
+        redirectOnUnauthorized: false,
+        showToast: true,
+      },
+    )
 
     if (response) {
       toast.success('Done. Check your email for recovery instructions.')
-      setDisabled(true)
+      setIsDisabled(true)
     }
   }
 
   return (
-    <fieldset disabled={disabled}>
+    <fieldset disabled={isDisabled}>
       <Row className="mt-4">
         <Col lg={4} md={6} className="mx-auto">
           <Card className="feature-card">
             <Card.Header>
               <h2 className="h4 mb-0">Forgot Password</h2>
             </Card.Header>
+
             <Card.Body>
               <Form onSubmit={handleSubmit}>
                 <Form.Group className="mb-3" controlId="forgotPasswordEmail">
@@ -54,6 +64,7 @@ export default function ForgotPasswordPage() {
                     onChange={(event) => setEmail(event.target.value)}
                   />
                 </Form.Group>
+
                 <div className="text-end">
                   <Button type="submit">Submit</Button>
                 </div>

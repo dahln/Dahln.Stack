@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { api, ApiError } from '../services/apiClient'
 
 const AuthContext = createContext(null)
@@ -12,11 +12,14 @@ function createUnauthenticatedState() {
   }
 }
 
+/**
+ * Provides authentication state and account actions for the entire app.
+ */
 export function AuthProvider({ children }) {
   const [authState, setAuthState] = useState(createUnauthenticatedState)
   const [isLoading, setIsLoading] = useState(true)
 
-  async function refreshAuth() {
+  const refreshAuth = useCallback(async () => {
     setIsLoading(true)
 
     try {
@@ -32,8 +35,9 @@ export function AuthProvider({ children }) {
       ])
 
       if (!userInfo) {
-        setAuthState(createUnauthenticatedState())
-        return createUnauthenticatedState()
+        const unauthenticatedState = createUnauthenticatedState()
+        setAuthState(unauthenticatedState)
+        return unauthenticatedState
       }
 
       const nextState = {
@@ -49,33 +53,37 @@ export function AuthProvider({ children }) {
       setAuthState(nextState)
       return nextState
     } catch {
-      const nextState = createUnauthenticatedState()
-      setAuthState(nextState)
-      return nextState
+      const unauthenticatedState = createUnauthenticatedState()
+      setAuthState(unauthenticatedState)
+      return unauthenticatedState
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     refreshAuth()
-  }, [])
+  }, [refreshAuth])
 
-  async function register(email, password) {
+  const register = useCallback(async (email, password) => {
     try {
-      await api.post('api/v1/account/register', { email, password }, {
-        redirectOnUnauthorized: false,
-        showToast: false,
-      })
+      await api.post(
+        'api/v1/account/register',
+        { email, password },
+        {
+          redirectOnUnauthorized: false,
+          showToast: false,
+        },
+      )
 
       return { succeeded: true, errorList: [] }
     } catch (error) {
       const messages = error instanceof ApiError ? error.messages : ['Registration failed.']
       return { succeeded: false, errorList: messages }
     }
-  }
+  }, [])
 
-  async function login(email, password, twoFactorCode, twoFactorRecoveryCode) {
+  const login = useCallback(async (email, password, twoFactorCode, twoFactorRecoveryCode) => {
     try {
       const response = await api.request(
         {
@@ -120,9 +128,9 @@ export function AuthProvider({ children }) {
         errorList: messages,
       }
     }
-  }
+  }, [refreshAuth])
 
-  async function logout() {
+  const logout = useCallback(async () => {
     try {
       await api.get('api/v1/account/logout', {
         redirectOnUnauthorized: false,
@@ -131,7 +139,7 @@ export function AuthProvider({ children }) {
     } finally {
       setAuthState(createUnauthenticatedState())
     }
-  }
+  }, [])
 
   const value = useMemo(
     () => ({
@@ -142,12 +150,13 @@ export function AuthProvider({ children }) {
       refreshAuth,
       register,
     }),
-    [authState, isLoading],
+    [authState, isLoading, login, logout, refreshAuth, register],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext)
 

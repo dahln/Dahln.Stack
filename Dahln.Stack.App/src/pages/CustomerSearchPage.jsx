@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Button, Form, Table } from 'react-bootstrap'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../services/apiClient'
@@ -13,26 +13,17 @@ import {
 const searchStorageKey = 'CustomerSearch'
 const defaultSortBy = 'Name'
 
+/**
+ * Search and browse customers with persisted filters, sorting, and paging.
+ */
 export default function CustomerSearchPage({ embedded = false }) {
   const navigate = useNavigate()
+
   const [items, setItems] = useState([])
   const [search, setSearch] = useState(createSearch(defaultSortBy))
   const [totalFound, setTotalFound] = useState(0)
 
-  useEffect(() => {
-    const cachedSearch = localStorage.getItem(searchStorageKey)
-
-    if (!cachedSearch) {
-      searchCustomers(0, true)
-      return
-    }
-
-    const parsedSearch = JSON.parse(cachedSearch)
-    setSearch(parsedSearch)
-    searchCustomers(parsedSearch.page, false, parsedSearch)
-  }, [])
-
-  async function searchCustomers(page, reset = false, currentSearch = search) {
+  const searchCustomers = useCallback(async (page, reset = false, currentSearch) => {
     const nextSearch = reset
       ? createSearch(defaultSortBy)
       : toApiSearch(currentSearch, page)
@@ -45,11 +36,25 @@ export default function CustomerSearchPage({ embedded = false }) {
       setItems(response.results ?? [])
       setTotalFound(response.total ?? 0)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    const cachedSearch = localStorage.getItem(searchStorageKey)
+
+    if (!cachedSearch) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      searchCustomers(0, true, createSearch(defaultSortBy))
+      return
+    }
+
+    const parsedSearch = JSON.parse(cachedSearch)
+    setSearch(parsedSearch)
+    searchCustomers(parsedSearch.page, false, parsedSearch)
+  }, [searchCustomers])
 
   async function handleSubmit(event) {
     event.preventDefault()
-    await searchCustomers(0, false)
+    await searchCustomers(0, false, search)
   }
 
   async function handleSort(column) {
@@ -75,11 +80,13 @@ export default function CustomerSearchPage({ embedded = false }) {
       <div className="d-flex flex-wrap justify-content-between gap-3 align-items-center mb-3">
         <div />
         <Button variant="success" onClick={() => navigate('/customer')}>
-          <i className="bi bi-plus-lg me-2" />Add Customer
+          <i className="bi bi-plus-lg me-2" />
+          Add Customer
         </Button>
       </div>
+
       <div className="d-flex flex-wrap justify-content-end gap-2 align-items-center mb-2">
-        <Form className="search-form" onSubmit={handleSubmit} autoComplete="off">
+        <Form onSubmit={handleSubmit} autoComplete="off" style={{ maxWidth: '28rem', width: '100%' }}>
           <div className="input-group">
             <Form.Control
               type="text"
@@ -92,38 +99,67 @@ export default function CustomerSearchPage({ embedded = false }) {
               }
             />
             <Button type="submit" variant="outline-secondary">
-              <i className="bi bi-search me-2" />Search
+              <i className="bi bi-search me-2" />
+              Search
             </Button>
           </div>
         </Form>
       </div>
+
       <div className="text-end mb-3">
         <button
           type="button"
           className="btn btn-link btn-sm text-decoration-none"
-          onClick={() => searchCustomers(0, true)}
+          onClick={() => searchCustomers(0, true, createSearch(defaultSortBy))}
         >
           Reset Search
         </button>
       </div>
+
       <div className="d-flex justify-content-end mb-3">
         <PaginationSummary
           search={search}
           pageCount={pageCount}
-          onPrevious={() => searchCustomers(search.page - 1, false)}
-          onNext={() => searchCustomers(search.page + 1, false)}
+          onPrevious={() => searchCustomers(search.page - 1, false, search)}
+          onNext={() => searchCustomers(search.page + 1, false, search)}
         />
       </div>
+
       <div className="table-responsive">
         <Table hover size="sm" className="align-middle">
           <thead>
             <tr>
-              <SortableHeader label="Name" column="Name" search={search} onSort={handleSort} width="50%" />
-              <SortableHeader label="State" column="State" search={search} onSort={handleSort} width="20%" />
-              <SortableHeader label="Active" column="Active" search={search} onSort={handleSort} width="20%" />
-              <SortableHeader label="Gender" column="Gender" search={search} onSort={handleSort} width="10%" />
+              <SortableHeader
+                label="Name"
+                column="Name"
+                search={search}
+                onSort={handleSort}
+                width="50%"
+              />
+              <SortableHeader
+                label="State"
+                column="State"
+                search={search}
+                onSort={handleSort}
+                width="20%"
+              />
+              <SortableHeader
+                label="Active"
+                column="Active"
+                search={search}
+                onSort={handleSort}
+                width="20%"
+              />
+              <SortableHeader
+                label="Gender"
+                column="Gender"
+                search={search}
+                onSort={handleSort}
+                width="10%"
+              />
             </tr>
           </thead>
+
           <tbody>
             {items.map((item) => (
               <tr key={item.id} className="table-row-link">
@@ -154,13 +190,14 @@ export default function CustomerSearchPage({ embedded = false }) {
           </tbody>
         </Table>
       </div>
+
       <div className="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-3">
-        <div className="search-found">Found {totalFound.toLocaleString()}</div>
+        <div className="small text-secondary">Found {totalFound.toLocaleString()}</div>
         <PaginationSummary
           search={search}
           pageCount={pageCount}
-          onPrevious={() => searchCustomers(search.page - 1, false)}
-          onNext={() => searchCustomers(search.page + 1, false)}
+          onPrevious={() => searchCustomers(search.page - 1, false, search)}
+          onNext={() => searchCustomers(search.page + 1, false, search)}
         />
       </div>
     </div>
@@ -169,6 +206,7 @@ export default function CustomerSearchPage({ embedded = false }) {
 
 function SortableHeader({ label, column, search, onSort, width }) {
   const isCurrentColumn = search.sortBy === column
+
   const icon =
     !isCurrentColumn
       ? null
@@ -178,7 +216,7 @@ function SortableHeader({ label, column, search, onSort, width }) {
 
   return (
     <th style={{ width }}>
-      <button type="button" className="btn btn-link table-sort" onClick={() => onSort(column)}>
+      <button type="button" className="btn btn-link" onClick={() => onSort(column)}>
         {label}
         {icon ? <i className={`${icon} ms-1`} /> : null}
       </button>
@@ -196,9 +234,13 @@ function PaginationSummary({ search, pageCount, onPrevious, onNext }) {
           </button>
         </li>
       ) : null}
+
       <li className="page-item disabled">
-        <span className="page-link">Page {pageCount === 0 ? 0 : search.page + 1} of {pageCount}</span>
+        <span className="page-link">
+          Page {pageCount === 0 ? 0 : search.page + 1} of {pageCount}
+        </span>
       </li>
+
       {search.page + 1 < pageCount ? (
         <li className="page-item">
           <button type="button" className="page-link" onClick={onNext}>

@@ -3,9 +3,12 @@ import { Button, Card, Col, Form, Row } from 'react-bootstrap'
 import { toast } from 'react-toastify'
 import { api } from '../services/apiClient'
 
+/**
+ * Requests another email confirmation message.
+ */
 export default function ConfirmEmailResendPage() {
   const [email, setEmail] = useState('')
-  const [disabled, setDisabled] = useState(false)
+  const [isDisabled, setIsDisabled] = useState(false)
 
   useEffect(() => {
     async function loadStatus() {
@@ -14,9 +17,10 @@ export default function ConfirmEmailResendPage() {
           redirectOnUnauthorized: false,
           showToast: false,
         })
-        setDisabled(response === false)
+
+        setIsDisabled(response === false)
       } catch {
-        setDisabled(true)
+        setIsDisabled(true)
       }
     }
 
@@ -25,25 +29,31 @@ export default function ConfirmEmailResendPage() {
 
   async function handleSubmit(event) {
     event.preventDefault()
-    const response = await api.post('resendConfirmationEmail', { email }, {
-      redirectOnUnauthorized: false,
-      showToast: true,
-    })
+
+    const response = await api.post(
+      'resendConfirmationEmail',
+      { email },
+      {
+        redirectOnUnauthorized: false,
+        showToast: true,
+      },
+    )
 
     if (response) {
       toast.success('Done. Check your email for confirmation instructions.')
-      setDisabled(true)
+      setIsDisabled(true)
     }
   }
 
   return (
-    <fieldset disabled={disabled}>
+    <fieldset disabled={isDisabled}>
       <Row className="mt-4">
         <Col lg={4} md={6} className="mx-auto">
           <Card className="feature-card">
             <Card.Header>
               <h2 className="h4 mb-0">Resend Email Confirmation</h2>
             </Card.Header>
+
             <Card.Body>
               <Form onSubmit={handleSubmit}>
                 <Form.Group className="mb-3" controlId="confirmEmailResendEmail">
@@ -54,6 +64,7 @@ export default function ConfirmEmailResendPage() {
                     onChange={(event) => setEmail(event.target.value)}
                   />
                 </Form.Group>
+
                 <div className="text-end">
                   <Button type="submit">Submit</Button>
                 </div>

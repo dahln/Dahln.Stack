@@ -8,9 +8,12 @@ import 'react-toastify/dist/ReactToastify.css'
 import './index.css'
 import App from './App.jsx'
 
+// Required for accessible focus management in react-modal.
 Modal.setAppElement('#root')
 
-createRoot(document.getElementById('root')).render(
+const rootElement = document.getElementById('root')
+
+createRoot(rootElement).render(
   <StrictMode>
     <App />
   </StrictMode>,

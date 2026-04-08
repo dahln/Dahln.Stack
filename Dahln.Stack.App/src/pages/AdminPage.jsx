@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Button, Form, Table } from 'react-bootstrap'
+import { useCallback, useEffect, useState } from 'react'
+import { Button, Card, Form, Table } from 'react-bootstrap'
 import { toast } from 'react-toastify'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { api } from '../services/apiClient'
@@ -8,6 +8,9 @@ import { createSearch, formatPageCount, sortDirections, toApiSearch } from '../u
 const searchStorageKey = 'Usersearch'
 const defaultSortBy = 'Email'
 
+/**
+ * Admin page for system settings and user administration.
+ */
 export default function AdminPage() {
   const [systemSettings, setSystemSettings] = useState({
     emailApiKey: '',
@@ -15,26 +18,13 @@ export default function AdminPage() {
     emailDomainRestriction: '',
     registrationEnabled: true,
   })
+
   const [items, setItems] = useState([])
   const [search, setSearch] = useState(createSearch(defaultSortBy))
   const [totalFound, setTotalFound] = useState(0)
   const [userToDelete, setUserToDelete] = useState(null)
 
-  useEffect(() => {
-    getSettings()
-
-    const cachedSearch = localStorage.getItem(searchStorageKey)
-    if (!cachedSearch) {
-      searchUsers(0, true)
-      return
-    }
-
-    const parsedSearch = JSON.parse(cachedSearch)
-    setSearch(parsedSearch)
-    searchUsers(parsedSearch.page, false, parsedSearch)
-  }, [])
-
-  async function getSettings() {
+  const getSettings = useCallback(async () => {
     const response = await api.get('api/v1/settings')
     if (response) {
       setSystemSettings({
@@ -44,14 +34,9 @@ export default function AdminPage() {
         registrationEnabled: Boolean(response.registrationEnabled),
       })
     }
-  }
+  }, [])
 
-  async function updateSettings() {
-    await api.put('api/v1/settings', systemSettings)
-    toast.success('Settings saved.')
-  }
-
-  async function searchUsers(page, reset = false, currentSearch = search) {
+  const searchUsers = useCallback(async (page, reset = false, currentSearch) => {
     const nextSearch = reset
       ? createSearch(defaultSortBy)
       : toApiSearch(currentSearch, page)
@@ -64,6 +49,26 @@ export default function AdminPage() {
       setItems(response.results ?? [])
       setTotalFound(response.total ?? 0)
     }
+  }, [])
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    getSettings()
+
+    const cachedSearch = localStorage.getItem(searchStorageKey)
+    if (!cachedSearch) {
+      searchUsers(0, true, createSearch(defaultSortBy))
+      return
+    }
+
+    const parsedSearch = JSON.parse(cachedSearch)
+    setSearch(parsedSearch)
+    searchUsers(parsedSearch.page, false, parsedSearch)
+  }, [getSettings, searchUsers])
+
+  async function updateSettings() {
+    await api.put('api/v1/settings', systemSettings)
+    toast.success('Settings saved.')
   }
 
   async function handleSort(column) {
@@ -84,6 +89,7 @@ export default function AdminPage() {
 
   async function toggleAdministrator(user) {
     await api.get(`api/v1/user/${user.id}/role/administrator`)
+
     setItems((currentItems) =>
       currentItems.map((currentUser) =>
         currentUser.id === user.id
@@ -108,68 +114,129 @@ export default function AdminPage() {
 
   return (
     <>
-      <div className="mt-3">
-        <h3>Settings</h3>
-        <hr />
-      </div>
-      <div className="settings-grid">
+      <Card className="mt-3 border-secondary">
+        <Card.Header className="bg-secondary text-white">
+          <h5 className="mb-0">Settings</h5>
+        </Card.Header>
+        <Card.Body>
+          <div style={{ display: 'grid', gap: '1rem', maxWidth: '32rem' }}>
         <Form.Group>
           <Form.Label>Email API Key</Form.Label>
-          <Form.Control value={systemSettings.emailApiKey} onChange={(event) => setSystemSettings((current) => ({ ...current, emailApiKey: event.target.value }))} />
+          <Form.Control
+            value={systemSettings.emailApiKey}
+            onChange={(event) =>
+              setSystemSettings((currentSettings) => ({
+                ...currentSettings,
+                emailApiKey: event.target.value,
+              }))
+            }
+          />
         </Form.Group>
+
         <Form.Group>
           <Form.Label>System Email Address</Form.Label>
-          <Form.Control value={systemSettings.systemEmailAddress} onChange={(event) => setSystemSettings((current) => ({ ...current, systemEmailAddress: event.target.value }))} />
+          <Form.Control
+            value={systemSettings.systemEmailAddress}
+            onChange={(event) =>
+              setSystemSettings((currentSettings) => ({
+                ...currentSettings,
+                systemEmailAddress: event.target.value,
+              }))
+            }
+          />
         </Form.Group>
+
         <Form.Group>
           <Form.Label>Email Domain Restrictions</Form.Label>
-          <Form.Control value={systemSettings.emailDomainRestriction} onChange={(event) => setSystemSettings((current) => ({ ...current, emailDomainRestriction: event.target.value }))} />
+          <Form.Control
+            value={systemSettings.emailDomainRestriction}
+            onChange={(event) =>
+              setSystemSettings((currentSettings) => ({
+                ...currentSettings,
+                emailDomainRestriction: event.target.value,
+              }))
+            }
+          />
         </Form.Group>
+
         <Form.Check
           className="mt-2"
           label="Registration Enabled"
           checked={systemSettings.registrationEnabled}
-          onChange={(event) => setSystemSettings((current) => ({ ...current, registrationEnabled: event.target.checked }))}
+          onChange={(event) =>
+            setSystemSettings((currentSettings) => ({
+              ...currentSettings,
+              registrationEnabled: event.target.checked,
+            }))
+          }
         />
+
         <div>
           <Button onClick={updateSettings}>Save Settings</Button>
         </div>
-      </div>
-      <div className="mt-5">
-        <h3>Users</h3>
-        <hr />
-      </div>
+          </div>
+        </Card.Body>
+      </Card>
+
+      <Card className="mt-4 border-secondary">
+        <Card.Header className="bg-secondary text-white">
+          <h5 className="mb-0">Users</h5>
+        </Card.Header>
+        <Card.Body>
+
       <div className="d-flex flex-wrap justify-content-end gap-2 align-items-center mb-2">
-        <Form className="search-form" onSubmit={(event) => {
-          event.preventDefault()
-          searchUsers(0, false)
-        }} autoComplete="off">
+        <Form
+          style={{ maxWidth: '28rem', width: '100%' }}
+          onSubmit={(event) => {
+            event.preventDefault()
+            searchUsers(0, false, search)
+          }}
+          autoComplete="off"
+        >
           <div className="input-group">
             <Form.Control
               type="text"
               value={search.filterText}
-              onChange={(event) => setSearch((currentSearch) => ({ ...currentSearch, filterText: event.target.value }))}
+              onChange={(event) =>
+                setSearch((currentSearch) => ({
+                  ...currentSearch,
+                  filterText: event.target.value,
+                }))
+              }
             />
             <Button type="submit" variant="outline-secondary">
-              <i className="bi bi-search me-2" />Search
+              <i className="bi bi-search me-2" />
+              Search
             </Button>
           </div>
         </Form>
       </div>
+
       <div className="text-end mb-3">
-        <button type="button" className="btn btn-link btn-sm text-decoration-none" onClick={() => searchUsers(0, true)}>
+        <button
+          type="button"
+          className="btn btn-link btn-sm text-decoration-none"
+          onClick={() => searchUsers(0, true, createSearch(defaultSortBy))}
+        >
           Reset Search
         </button>
       </div>
+
       <div className="table-responsive">
         <Table hover size="sm" className="align-middle">
           <thead>
             <tr>
               <th style={{ width: '50%' }}>
-                <button type="button" className="btn btn-link table-sort" onClick={() => handleSort('Email')}>
+                <button
+                  type="button"
+                  className="btn btn-link"
+                  onClick={() => handleSort('Email')}
+                >
                   Email
                   {search.sortBy === 'Email' ? (
-                    <i className={`${search.sortDirection === sortDirections.ascending ? 'bi bi-chevron-down' : 'bi bi-chevron-up'} ms-1`} />
+                    <i
+                      className={`${search.sortDirection === sortDirections.ascending ? 'bi bi-chevron-down' : 'bi bi-chevron-up'} ms-1`}
+                    />
                   ) : null}
                 </button>
               </th>
@@ -177,6 +244,7 @@ export default function AdminPage() {
               <th style={{ width: '1%' }} />
             </tr>
           </thead>
+
           <tbody>
             {items.map((item) => (
               <tr key={item.id}>
@@ -202,28 +270,45 @@ export default function AdminPage() {
           </tbody>
         </Table>
       </div>
+
       <div className="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-3">
-        <div className="search-found">Found {totalFound.toLocaleString()}</div>
+        <div className="small text-secondary">Found {totalFound.toLocaleString()}</div>
         <ul className="pagination mb-0">
           {search.page + 1 > 1 ? (
             <li className="page-item">
-              <button type="button" className="page-link" onClick={() => searchUsers(search.page - 1, false)}>
+              <button
+                type="button"
+                className="page-link"
+                onClick={() => searchUsers(search.page - 1, false, search)}
+              >
                 Previous
               </button>
             </li>
           ) : null}
+
           <li className="page-item disabled">
-            <span className="page-link">Page {pageCount === 0 ? 0 : search.page + 1} of {pageCount}</span>
+            <span className="page-link">
+              Page {pageCount === 0 ? 0 : search.page + 1} of {pageCount}
+            </span>
           </li>
+
           {search.page + 1 < pageCount ? (
             <li className="page-item">
-              <button type="button" className="page-link" onClick={() => searchUsers(search.page + 1, false)}>
+              <button
+                type="button"
+                className="page-link"
+                onClick={() => searchUsers(search.page + 1, false, search)}
+              >
                 Next
               </button>
             </li>
           ) : null}
         </ul>
       </div>
+
+        </Card.Body>
+      </Card>
+
       <ConfirmDialog
         isOpen={Boolean(userToDelete)}
         title="Delete User"

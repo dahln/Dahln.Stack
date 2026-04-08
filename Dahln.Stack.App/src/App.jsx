@@ -16,6 +16,9 @@ import LogoutPage from './pages/LogoutPage'
 import RegisterPage from './pages/RegisterPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 
+/**
+ * Root route map for the application.
+ */
 function App() {
   return (
     <BrowserRouter>
@@ -24,13 +27,16 @@ function App() {
           <AppLayout>
             <Routes>
               <Route path="/" element={<HomePage />} />
+
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+              <Route path="/logout" element={<LogoutPage />} />
+
               <Route path="/confirmingEmail" element={<ConfirmEmailPage />} />
               <Route path="/confirmEmailResend" element={<ConfirmEmailResendPage />} />
               <Route path="/password/forgot" element={<ForgotPasswordPage />} />
               <Route path="/password/reset/:code" element={<ResetPasswordPage />} />
-              <Route path="/logout" element={<LogoutPage />} />
+
               <Route
                 path="/customers"
                 element={
@@ -39,6 +45,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+
               <Route
                 path="/customer"
                 element={
@@ -47,6 +54,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+
               <Route
                 path="/customer/:id"
                 element={
@@ -55,6 +63,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+
               <Route
                 path="/account"
                 element={
@@ -63,6 +72,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+
               <Route
                 path="/admin"
                 element={
@@ -71,6 +81,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </AppLayout>

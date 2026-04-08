@@ -4,9 +4,13 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { api } from '../services/apiClient'
 
+/**
+ * Completes password reset for a given recovery code.
+ */
 export default function ResetPasswordPage() {
   const navigate = useNavigate()
   const { code } = useParams()
+
   const [email, setEmail] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -19,6 +23,7 @@ export default function ResetPasswordPage() {
           redirectOnUnauthorized: false,
           showToast: false,
         })
+
         setAllowAllOperations(Boolean(response))
       } catch {
         setAllowAllOperations(false)
@@ -40,14 +45,18 @@ export default function ResetPasswordPage() {
       return
     }
 
-    const response = await api.post('resetpassword', {
-      email,
-      resetCode: code,
-      newPassword,
-    }, {
-      redirectOnUnauthorized: false,
-      showToast: true,
-    })
+    const response = await api.post(
+      'resetpassword',
+      {
+        email,
+        resetCode: code,
+        newPassword,
+      },
+      {
+        redirectOnUnauthorized: false,
+        showToast: true,
+      },
+    )
 
     if (response) {
       toast.success('Done. Password is reset. Please log in with your new password.')
@@ -63,8 +72,10 @@ export default function ResetPasswordPage() {
             <Card.Header>
               <h2 className="h4 mb-0">Reset Password</h2>
             </Card.Header>
+
             <Card.Body>
               <p>Re-enter your account email and the new password.</p>
+
               <Form onSubmit={handleSubmit}>
                 <Form.Group className="mb-3" controlId="resetPasswordEmail">
                   <Form.Control
@@ -73,6 +84,7 @@ export default function ResetPasswordPage() {
                     onChange={(event) => setEmail(event.target.value)}
                   />
                 </Form.Group>
+
                 <Form.Group className="mb-3" controlId="resetPasswordNewPassword">
                   <Form.Control
                     type="password"
@@ -81,6 +93,7 @@ export default function ResetPasswordPage() {
                     onChange={(event) => setNewPassword(event.target.value)}
                   />
                 </Form.Group>
+
                 <Form.Group className="mb-3" controlId="resetPasswordConfirmPassword">
                   <Form.Control
                     type="password"
@@ -89,6 +102,7 @@ export default function ResetPasswordPage() {
                     onChange={(event) => setConfirmPassword(event.target.value)}
                   />
                 </Form.Group>
+
                 <div className="text-end">
                   <Button type="submit">Submit</Button>
                 </div>

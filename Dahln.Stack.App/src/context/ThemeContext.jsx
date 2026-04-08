@@ -7,6 +7,9 @@ function getInitialTheme() {
   return localStorage.getItem(storageKey) || 'light'
 }
 
+/**
+ * Provides app theme state and persists it in local storage.
+ */
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(getInitialTheme)
 
@@ -20,9 +23,7 @@ export function ThemeProvider({ children }) {
       isDarkMode: theme === 'dark',
       theme,
       toggleTheme() {
-        setTheme((currentTheme) =>
-          currentTheme === 'dark' ? 'light' : 'dark',
-        )
+        setTheme((currentTheme) => (currentTheme === 'dark' ? 'light' : 'dark'))
       },
     }),
     [theme],
@@ -31,6 +32,7 @@ export function ThemeProvider({ children }) {
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useTheme() {
   const context = useContext(ThemeContext)
 

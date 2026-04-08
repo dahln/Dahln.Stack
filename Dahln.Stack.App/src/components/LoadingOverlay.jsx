@@ -2,10 +2,15 @@ import { useEffect, useState } from 'react'
 import { Spinner } from 'react-bootstrap'
 import { subscribeToNetworkActivity } from '../services/apiClient'
 
+/**
+ * Global loading indicator that mirrors API network activity.
+ */
 export default function LoadingOverlay() {
   const [isLoading, setIsLoading] = useState(false)
 
-  useEffect(() => subscribeToNetworkActivity(setIsLoading), [])
+  useEffect(() => {
+    return subscribeToNetworkActivity(setIsLoading)
+  }, [])
 
   if (!isLoading) {
     return null

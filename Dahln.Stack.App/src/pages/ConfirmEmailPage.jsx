@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Alert, Row, Col } from 'react-bootstrap'
+import { Alert, Col, Row } from 'react-bootstrap'
 import { useSearchParams } from 'react-router-dom'
 import { api } from '../services/apiClient'
 
+/**
+ * Confirms a user email using query string values from the callback URL.
+ */
 export default function ConfirmEmailPage() {
   const [searchParams] = useSearchParams()
   const [confirmationFinished, setConfirmationFinished] = useState(false)
