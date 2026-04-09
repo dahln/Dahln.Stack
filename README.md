@@ -1,3 +1,5 @@
+DEMO: Coming soon.
+
 ## Overview
 Dahln.Stack is am Opinionated .NET 10 + React starter template using a **decoupled proxy** architecture. The API and frontend run as independent processes during development and are deployed as separate applications behind Nginx in production.
 
