@@ -1,0 +1,83 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.version.outputs.VERSION }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Generate version
+        id: version
+        run: echo "VERSION=$(date +'%Y.%m.%d').${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+
+      - name: Build API x64
+        run: |
+          dotnet publish Dahln.Stack.API/Dahln.Stack.API.csproj \
+            -c Release -r linux-x64 --self-contained true \
+            -p:PublishSingleFile=true -o ./publish-api-x64
+          cd publish-api-x64 && zip -r ../Dahln.Stack.API-v${{ steps.version.outputs.VERSION }}-linux-x64.zip .
+
+      - name: Build API ARM64
+        run: |
+          dotnet publish Dahln.Stack.API/Dahln.Stack.API.csproj \
+            -c Release -r linux-arm64 --self-contained true \
+            -p:PublishSingleFile=true -o ./publish-api-arm64
+          cd publish-api-arm64 && zip -r ../Dahln.Stack.API-v${{ steps.version.outputs.VERSION }}-linux-arm64.zip .
+
+      - name: Build React App
+        run: |
+          cd Dahln.Stack.App
+          npm install
+          npm run build
+          cd dist && zip -r ../../Dahln.Stack.App-v${{ steps.version.outputs.VERSION }}.zip .
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.VERSION }}
+          name: Dahln.Stack v${{ steps.version.outputs.VERSION }}
+          files: |
+            Dahln.Stack.API-v${{ steps.version.outputs.VERSION }}-linux-x64.zip
+            Dahln.Stack.API-v${{ steps.version.outputs.VERSION }}-linux-arm64.zip
+            Dahln.Stack.App-v${{ steps.version.outputs.VERSION }}.zip
+          generate_release_notes: true
+
+      - name: Upload API x64 Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-x64
+          path: Dahln.Stack.API-v${{ steps.version.outputs.VERSION }}-linux-x64.zip
+
+      - name: Upload API ARM64 Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-arm64
+          path: Dahln.Stack.API-v${{ steps.version.outputs.VERSION }}-linux-arm64.zip
+
+      - name: Upload App Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app
+          path: Dahln.Stack.App-v${{ steps.version.outputs.VERSION }}.zip
