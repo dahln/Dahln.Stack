@@ -24,7 +24,7 @@ Two terminals are required.
 
 ### Terminal 1 — API
 
-```powershell
+```
 dotnet run --project Dahln.Stack.API\Dahln.Stack.API.csproj --launch-profile https
 ```
 
@@ -33,7 +33,7 @@ Scalar API docs (dev only): **https://localhost:7001/scalar**
 
 ### Terminal 2 — Frontend
 
-```powershell
+```
 cd Dahln.Stack.App
 npm install        # first time only
 npm run dev
@@ -45,7 +45,7 @@ All `/api/*` requests from the frontend are proxied to `https://localhost:7001` 
 
 ### Trust the dev certificate (first time only)
 
-```powershell
+```
 dotnet dev-certs https --trust
 ```
 
@@ -55,11 +55,6 @@ Navigate to **https://localhost:5173**
 
 The SQLite database is created and migrations are applied automatically on first API startup.
 
-## Getting Started (new project)
-1. Clone the repository.
-2. Optional: rename the solution with `RenameProject.ps1`.
-3. Trust the dev certificate (see above).
-4. Run the API and frontend (see above).
 
 ## Authentication And Email
 Authentication uses ASP.NET Core Identity and stores user data in your database.
@@ -74,11 +69,11 @@ Without SMTP configuration, the application still runs, but email-dependent acco
 ## Database Commands
 Run these from the solution root:
 
-```powershell
+```
 dotnet ef migrations add InitialCreate --project Dahln.Stack.Database --startup-project Dahln.Stack.API
 ```
 
-```powershell
+```
 dotnet ef database update --project Dahln.Stack.Database --startup-project Dahln.Stack.API
 ```
 
