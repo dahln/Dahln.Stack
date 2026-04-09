@@ -216,7 +216,7 @@ function SortableHeader({ label, column, search, onSort, width }) {
 
   return (
     <th style={{ width }}>
-      <button type="button" className="btn btn-link" onClick={() => onSort(column)}>
+      <button type="button" className="btn btn-link text-decoration-none" onClick={() => onSort(column)}>
         {label}
         {icon ? <i className={`${icon} ms-1`} /> : null}
       </button>

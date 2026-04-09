@@ -16,9 +16,9 @@ export default function TopNavigation() {
   const themeIcon = useMemo(
     () =>
       isDarkMode ? (
-        <i className="bi bi-moon-fill me-1 text-secondary" />
+        <i className="bi bi-moon-fill me-2" style={{ color: 'mediumpurple' }} />
       ) : (
-        <i className="bi bi-sun me-1 text-warning" />
+        <i className="bi bi-sun me-2" style={{ color: 'gold' }} />
       ),
     [isDarkMode],
   )
@@ -40,7 +40,7 @@ export default function TopNavigation() {
     <Navbar bg="dark" data-bs-theme="dark" expand="lg" className="shadow-sm">
       <Container fluid>
         <Navbar.Brand as={Link} to="/" className="ms-2">
-          <i className="bi bi-stack me-2" />
+          <i className="bi bi-stack me-2" style={{ color: 'mediumpurple' }} />
           Dahln.Stack
         </Navbar.Brand>
 
