@@ -11,6 +11,8 @@ Dahln.Stack is am Opinionated .NET 10 + React starter template using a **decoupl
 - `Dahln.Stack.Dto`: shared DTOs and enums
 - `Dahln.Stack.Test`: unit tests for service logic
 
+![Architecture-Image](https://github.com/dahln/BlazorWasmAndApiTemplate/blob/bc91551394dd92649c239290dc8d05b8810f5d00/ArchitectureDiagram.png)
+
 ## Technologies
 - .NET 10
 - ASP.NET Core Web API
