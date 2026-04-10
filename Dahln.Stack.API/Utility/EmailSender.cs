@@ -93,13 +93,13 @@ internal sealed class EmailSender : IEmailSender<IdentityUser>
     {
         if (string.IsNullOrWhiteSpace(email))
         {
-            return "[redacted]";
+            return "[Address is Null or Empty]";
         }
 
         var atIndex = email.IndexOf('@');
         if (atIndex <= 0 || atIndex == email.Length - 1)
         {
-            return "[redacted]";
+            return "[Address does not have a valid @]";
         }
 
         var localPart = email.Substring(0, atIndex);
