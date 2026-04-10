@@ -16,7 +16,9 @@ With the latest updates, I have decided to refocus this template project on Reac
 - `Dahln.Stack.Dto`: shared DTOs and enums
 - `Dahln.Stack.Test`: unit tests for service logic
 
-![Architecture-Image](https://github.com/dahln/BlazorWasmAndApiTemplate/blob/bc91551394dd92649c239290dc8d05b8810f5d00/ArchitectureDiagram.png)
+![Architecture-Image](https://github.com/dahln/Dahln.Stack/blob/b2723fc1f21b5b9b75edf0678ff45065da551ca1/ArchitectureDiagram.png)
+
+
 
 ## Technologies
 - .NET 10
