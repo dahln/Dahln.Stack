@@ -1,13 +1,9 @@
-import axios from 'axios'
 import { toast } from 'react-toastify'
 
-const apiClient = axios.create({
-  baseURL: '/api',
-  withCredentials: true,
-  headers: {
-    'Cache-Control': 'no-cache',
-  },
-})
+const BASE_URL = '/api'
+const DEFAULT_HEADERS = {
+  'Cache-Control': 'no-cache',
+}
 
 let activeRequestCount = 0
 const activityListeners = new Set()
@@ -85,26 +81,36 @@ export class ApiError extends Error {
   }
 }
 
-function createApiError(error) {
-  if (!axios.isAxiosError(error)) {
-    return new ApiError('The request failed.', {
-      status: 0,
-      detail: null,
-      data: null,
-      messages: ['The request failed.'],
-    })
+async function parseResponseBody(response) {
+  const contentType = response.headers.get('content-type') ?? ''
+  if (contentType.includes('application/json')) {
+    return response.json()
+  }
+  const text = await response.text()
+  return text || null
+}
+
+async function createApiErrorFromResponse(response) {
+  let data = null
+  try {
+    data = await parseResponseBody(response)
+  } catch {
+    // ignore parse failures
   }
 
-  const status = error.response?.status ?? 0
-  const data = error.response?.data ?? null
+  const status = response.status
   const detail = typeof data?.detail === 'string' ? data.detail : null
   const messages = buildMessages(data)
 
-  return new ApiError(messages[0], {
-    status,
-    detail,
-    data,
-    messages,
+  return new ApiError(messages[0], { status, detail, data, messages })
+}
+
+function createNetworkError() {
+  return new ApiError('The request failed.', {
+    status: 0,
+    detail: null,
+    data: null,
+    messages: ['The request failed.'],
   })
 }
 
@@ -121,7 +127,27 @@ function showMessages(messages) {
   messages.forEach((message) => toast.error(message))
 }
 
-async function executeRequest(config, options = {}) {
+async function fetchRequest(method, url, body) {
+  const headers = { ...DEFAULT_HEADERS }
+  if (body !== undefined && body !== null) {
+    headers['Content-Type'] = 'application/json'
+  }
+
+  const response = await fetch(`${BASE_URL}${url}`, {
+    method,
+    headers,
+    credentials: 'include',
+    body: body !== undefined && body !== null ? JSON.stringify(body) : undefined,
+  })
+
+  if (!response.ok) {
+    throw await createApiErrorFromResponse(response)
+  }
+
+  return response
+}
+
+async function executeRequest(method, url, body, options = {}) {
   const {
     redirectOnUnauthorized = true,
     showToast = true,
@@ -133,10 +159,10 @@ async function executeRequest(config, options = {}) {
   }
 
   try {
-    const response = await apiClient.request(config)
-    return response.data
+    const response = await fetchRequest(method, url, body)
+    return await parseResponseBody(response)
   } catch (error) {
-    const apiError = createApiError(error)
+    const apiError = error instanceof ApiError ? error : createNetworkError()
 
     if (handleUnauthorized(apiError, redirectOnUnauthorized)) {
       return null
@@ -166,9 +192,9 @@ async function executeRawRequest(config, options = {}) {
   }
 
   try {
-    return await apiClient.request(config)
+    return await fetchRequest(config.method, config.url, config.data)
   } catch (error) {
-    const apiError = createApiError(error)
+    const apiError = error instanceof ApiError ? error : createNetworkError()
 
     if (handleUnauthorized(apiError, redirectOnUnauthorized)) {
       return null
@@ -197,16 +223,16 @@ export function subscribeToNetworkActivity(listener) {
 
 export const api = {
   get(url, options) {
-    return executeRequest({ method: 'get', url }, options)
+    return executeRequest('get', url, undefined, options)
   },
   post(url, data, options) {
-    return executeRequest({ method: 'post', url, data }, options)
+    return executeRequest('post', url, data, options)
   },
   put(url, data, options) {
-    return executeRequest({ method: 'put', url, data }, options)
+    return executeRequest('put', url, data, options)
   },
   delete(url, options) {
-    return executeRequest({ method: 'delete', url }, options)
+    return executeRequest('delete', url, undefined, options)
   },
   request(config, options) {
     return executeRawRequest(config, options)
