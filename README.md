@@ -1,122 +1,115 @@
-## What & Why
-This project is an example of one way to build a .NET Web application, using Blazor, Web API, and SQL. Demonstrating simple CRUD & Search operations, protected by Authentication/Authorization. This is an active application that I continue to update as .NET is updated and expanded. I created this template because the stock templates from Microsoft do not offer all the functionality I want in a template.
+- [ ] DEMO: Coming soon
+- [ ] Testing new install.sh script - used for either manual or automatted deployments
+- [ ] Add badges
 
-Some of the page and components in the WASM client app are copied from or derived from the stock Microsoft templates, for example login and register.
+## Overview
+Dahln.Stack is am Opinionated .NET 10 + React starter template using a **decoupled proxy** architecture. The API and frontend run as independent processes during development and are deployed as separate applications behind Nginx in production.
 
-My preferred method of hosting is to use an Azure App Service. This template uses Sqlite for the database. In my experience Sqlite doesn't perform reliably on an Azure App Service. This demo is hosted on an Ubuntu server. You can review the CI/CD action for ideas on deploying to a Linux server instead of an App Service. Feel free to reach out if you have questions for setting up a server. 
+## 2026 Announcement & Update
+With the latest updates, I have decided to refocus this template project on React. Working with Blazor WASM is fun, and I'm passionate about Blazor. However, over the past 2 years the only Blazor work I have done has been my own 'passion projects', and even some of those projects are now in React. I'm rebranding the project to 'Dahln.Stack', emphasizing that this is my preferred stack choice, at the moment. This rename will make future technology pivots more fluid. I have branched the current Blazor version and will keep that, and other archived branches, as a reference. Until recently my changes have been in another branch, and in order to finish the template restructuring I must now bring them into the master branch - your patience is appreciated while I finalize my current changes.
+
+## Solution Layout
+- `Dahln.Stack.API`: ASP.NET Core Web API, controllers, and Identity endpoints
+- `Dahln.Stack.App`: React + Vite frontend
+- `Dahln.Stack.Service`: business logic and database orchestration
+- `Dahln.Stack.Database`: EF Core DbContext, entities, and migrations
+- `Dahln.Stack.Dto`: shared DTOs and enums
+- `Dahln.Stack.Test`: unit tests for service logic
+
+![Architecture-Image](https://github.com/dahln/BlazorWasmAndApiTemplate/blob/bc91551394dd92649c239290dc8d05b8810f5d00/ArchitectureDiagram.png)
 
 ## Technologies
- - .NET 10 & C#
- - Web API
- - Blazor WASM
- - Web API
- - SQL
- - Identity API
- - Identity API 2FA
- - GitHub Actions
- - [Blazored Libraries (Toast, LocalStorage, Modal)](https://github.com/Blazored)
- - [Bootstrap CDN (Bootstrap and Boostrap Icons)](https://getbootstrap.com/)
+- .NET 10
+- ASP.NET Core Web API
+- React + Vite
+- ASP.NET Core Identity with cookie auth and 2FA support
+- Entity Framework Core + SQLite
+- Bootstrap + Bootstrap Icons
+- Scalar/OpenAPI in development
 
-## Getting Started
-Getting started with this project is easy.
-1. Recommendation: Use the Github 'Use this template' feature. Then clone the repo.
-2. Using the powershell script 'RenameProject.ps1', rename the 'BlazorTemplate' folders, files, and code references from 'BlazorTemplate' to the 'NewProjectNameOfYourChoice'. From the root of the solution, run this command: 
+## Local Development - Quick Start
 
-   Some files and folders will not be updated if they are open. Close VS Code, Visual Studio, or other tools prior to running this script.
-   ```
-   .\RenameProject.ps1 -FolderPath . -OldName "BlazorTemplate"  -NewName "NewProjectNameOfYourChoice"
-   ```
-   You can delete the script after you use it. Unless you want to rename your project again, there is no reason to keep it.
+Two terminals are required.
 
-4. From the root of the solution, start the API project by running this command:
-   ```
-   dotnet watch --project NewProjectNameOfYourChoice.API
-   ```
-   The API project acts as the host for the API and the App.
+### Terminal 1 - API
 
-5. You can create data in the UI, or you can use the API and the 'seed' method to create a large quantity of seed data to expirament with.
-
-## Misc Details    
-1. This project has no required outside dependencies to get started. The database is a SQLite DB, and the database will be created automatically when you startup the project the first time. You simply need to clone the repo, then run the API project by calling 'dotnet watch' from the API project folder.
-2. Authentication is handled by ASP Identity, and is stored in your own DB.
-3. On optional (but recommended) dependency is SMTP2GO. This template uses SMTP2GO to send emails. The template does not require SMTP2GO in order to work, however some features are not available until you add a SMTP2GO API key and system email address admin settings. Features you cannot use without SMTP2GO include:
-   - Account Activation and Email Confirmation
-   - Account/Password recovery
-   - Allowing a user to change their email/username.
-4. This application demonstrates simple CRUD operations. You can create data in the UI, or you can use the API and the 'seed' method to create a large quantity of seed data to expirament with.
-5. This template has some basic admin features. The first user to register will automatically be given the administrator role. Administrative abilities include: enable/disable registration, setting the SMTP2GO system email, API values, and listing/deleting registered users.
-
-## Project Architecture
-This application now has 5 projects in the solution:
- - **API**: Handling HTTP requests and delegating all database and business logic operations to the Service layer. Manages authentication and authorization. Hosts the App in the same process. Review the .http file for example calls of each API call.
- - **Service**: The middle layer where all business logic and database operations are performed. The API does not directly interact with the database.
- - **App**: A Blazor WASM project that consumes the API. Hosted in the API process.
- - **Dto**: Contains data transfer objects shared between the API, Service, and App projects. This was previously named 'Common'.
- - **Database**: Contains all the Entities and DB Context.
-
-This separation makes the architecture more maintainable and scalable. The API project hosts both the API and the App. The App, while an independent application, is hosted as part of the API, which removes the need for complex CORS configurations. On startup, you can browse to the API documentation (Scalar) to use the API directly, or browse to the App. Scalar is typically hosted at `/scalar` — check `Program.cs` for the configured route if different.
-
-## API Versioning
-There are tools to handle API versioning. Add which ever tools you prefer. This template handles API version manually by specifying v1 in the service URL.
-
-## Why Identity for Authentication?
-1. It enables quick setup and getting your project going easily. 
-2. It is easy to customize and supported by Microsoft.
-3. It allows for 100% control of your user data and authentication/authorization process. There are other Authentication options such as Azure B2C/Entra and Auth0.
-
-## [SMTP2GO](https://www.smtp2go.com/)
-This project uses SMTP2GO to send emails. A SMTP2GO API key is required. The live-demo has a key configured, but that value/key is not checked into the Repo. You will need to specify your own SMTP2GO API key and system email address. Some features that require email are not available until you provide the necessary SMTP2GO values. It is a simple process to create your own SMTP2GO account and retreive your API key.
-
-## Why SQLite?
-It runs on Windows and Linux. It is great for this template. Depending on your projects needs, it may work for production. If you need more than SQLite offers then I recommend switching to Azure SQL. If you switch to Azure SQL, besure to delete your SQLite DB migrations and create new a 'Initial Migration' for your new Azure SQL DB.
-
-## DB Migrations
-This project includes the necessary "Initial Creation" DB migration, used for the initial creation of a DB when the application connects to the DB for the first time. The Program.cs in the API project will automatically check for DB migrations which need to run, and run them automatically. You can run the DB migrations manually if desired. The commands below outline how to generate a DB migration and run a migration.
-
-https://docs.microsoft.com/en-us/ef/core/cli/dotnet#common-options
-
-## Using dotnet CLI
-Run these commands from the root of the solution. Adjust these commands to match the name of your project (Replace 'BlazorTemplate')
 ```
-dotnet ef migrations add InitialCreate --project BlazorTemplate.Database --startup-project BlazorTemplate.API
-```
-```
-dotnet ef database update --project BlazorTemplate.Database --startup-project BlazorTemplate.API
+dotnet run --project Dahln.Stack.API\Dahln.Stack.API.csproj --launch-profile https
 ```
 
+API runs at: **https://localhost:7001**  
+Scalar API docs (dev only): **https://localhost:7001/scalar**
 
-## Ignore Local Changes to AppSettings.json
-Sensative configuration data, such as the DB connection strings, are kept in the appsettings.json files. Depending on your situation, you may NOT want to check in these values to the repo. Use the following commands to ignore changes to the appsettings.json files:
- ```
- git update-index --assume-unchanged .\BlazorTemplate.API\appsettings.json
- ```
- To reverse the ignore, use these commands:
- ```
- git update-index --no-assume-unchanged .\BlazorTemplate.API\appsettings.json
- ```
+### Terminal 2 - Frontend
 
-## Only want an API
-If you don't want to use the UI/App, do these three steps:
-1. Delete the BlazorTemplate.App project (Make sure references to it in csproj and sln files are updated)
-2. In BlazorTemplate.API program.cs, remove the "app.MapStaticAssets();" line
-3. In BlazorTemplate.API program.cs, remove the "app.MapFallbackToFile("index.html");" line
+```
+cd Dahln.Stack.App
+npm install        # first time only
+npm run dev
+```
 
-In startup it still just "start" - It will probably start a new tab. Just navigate to `/scalar` (or the configured route) to use the API directly.
+Frontend runs at: **https://localhost:5173**
+
+All `/api/*` requests from the frontend are proxied to `https://localhost:7001` by Vite - no CORS configuration needed.
+
+### Trust the dev certificate (first time only)
+
+```
+dotnet dev-certs https --trust
+```
+
+### Open the app
+
+Navigate to **https://localhost:5173**
+
+The SQLite database is created and migrations are applied automatically on first API startup.
 
 
-## Licensing
-This project uses the 'Unlicense'.  It is a simple license - review it at your own leisure.
+## Authentication And Email
+Authentication uses ASP.NET Core Identity and stores user data in your database.
+
+SMTP2GO is optional but recommended if you want email-driven flows such as:
+- email confirmation
+- password recovery
+- email/username changes
+
+Without SMTP configuration, the application still runs, but email-dependent account flows are limited.
+
+## Database Commands
+Run these from the solution root:
+
+```
+dotnet ef migrations add InitialCreate --project Dahln.Stack.Database --startup-project Dahln.Stack.API
+```
+
+```
+dotnet ef database update --project Dahln.Stack.Database --startup-project Dahln.Stack.API
+```
+
+## Ignore Local App Settings Changes
+If you want to keep local configuration changes out of git:
+
+```
+git update-index --assume-unchanged .\Dahln.Stack.API\appsettings.json
+```
+
+To reverse it:
+
+```
+git update-index --no-assume-unchanged .\Dahln.Stack.API\appsettings.json
+```
+
+## Deployment
+
+Review DEPLOYMENT.md for instructions on how to deploy the application
+
+## License
+This project uses the Unlicense. See `LICENSE` for the full text.
 
 ## Resources
 - [Identity API with WebAPI](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity-api-authorization?view=aspnetcore-8.0)
-- [Blazor Environment Variables](https://learn.microsoft.com/en-us/aspnet/core/blazor/fundamentals/environments?view=aspnetcore-8.0)
+- [EF Core CLI](https://learn.microsoft.com/en-us/ef/core/cli/dotnet)
 
-## Misc & Recommended Tools
-1. [Azure](https://portal.azure.com)
-2. [Namecheap](https://namecheap.com)
-2. [Namecheap Logo Maker](https://www.namecheap.com/logo-maker/)
-3. [SSLS](https://www.ssls.com/)
-4. [SVG Crop](https://svgcrop.com/)
 
 
 

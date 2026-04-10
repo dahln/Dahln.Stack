@@ -1,0 +1,36 @@
+name: PR Validation
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Build API
+        run: dotnet build Dahln.Stack.API/Dahln.Stack.API.csproj -c Release
+
+      - name: Run Tests
+        run: dotnet test Dahln.Stack.Test/Dahln.Stack.Test.csproj -c Release --no-restore
+
+      - name: Build React App
+        run: |
+          cd Dahln.Stack.App
+          npm install
+          npm run build

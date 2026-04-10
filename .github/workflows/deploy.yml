@@ -1,0 +1,36 @@
+name: Deploy
+
+on:
+  # release:
+  #   types: [published]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Upload install script to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVERADDRESS }}
+          username: ${{ secrets.SERVERUSERNAME }}
+          key: ${{ secrets.SERVERKEY }}
+          port: ${{ secrets.SERVERPORT }}
+          source: "install.sh"
+          target: "/tmp"
+
+      - name: Run install script
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVERADDRESS }}
+          username: ${{ secrets.SERVERUSERNAME }}
+          key: ${{ secrets.SERVERKEY }}
+          port: ${{ secrets.SERVERPORT }}
+          script: |
+            chmod +x /tmp/install.sh
+            sudo /tmp/install.sh
+            rm -f /tmp/install.sh
