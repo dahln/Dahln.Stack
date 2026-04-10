@@ -58,8 +58,8 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
-# Resolve the non-root user who invoked sudo
-RUN_USER="${SUDO_USER:-$USER}"
+# Application service user
+APP_USER="ApplicationRunner"
 
 echo "============================================"
 echo " Dahln.Stack Installer"
@@ -70,7 +70,7 @@ echo ""
 
 # ─── 1. Install Dependencies ─────────────────────────────────────────────────
 
-echo ">>> [1/6] Installing dependencies..."
+echo ">>> [1/7] Installing dependencies..."
 apt-get update -y
 apt-get install -y unzip rsync nginx ufw curl jq
 
@@ -82,9 +82,21 @@ ufw --force enable >/dev/null 2>&1 || true
 echo "    Dependencies installed."
 echo ""
 
-# ─── 2. Download Latest Release ──────────────────────────────────────────────
+# ─── 2. Create Application User ──────────────────────────────────────────────
 
-echo ">>> [2/6] Downloading latest release from GitHub..."
+echo ">>> [2/7] Setting up ${APP_USER} user..."
+
+if ! id "${APP_USER}" &>/dev/null; then
+    useradd --system --no-create-home --shell /usr/sbin/nologin "${APP_USER}"
+    echo "    User ${APP_USER} created."
+else
+    echo "    User ${APP_USER} already exists."
+fi
+echo ""
+
+# ─── 3. Download Latest Release ──────────────────────────────────────────────
+
+echo ">>> [3/7] Downloading latest release from GitHub..."
 
 RELEASE_JSON=$(curl -sf "https://api.github.com/repos/${REPO}/releases/latest")
 TAG_NAME=$(echo "$RELEASE_JSON" | jq -r '.tag_name')
@@ -123,9 +135,9 @@ curl -sfL -o "${TMPDIR}/app.zip" "$APP_URL"
 echo "    Downloads complete."
 echo ""
 
-# ─── 3. Deploy Packages ──────────────────────────────────────────────────────
+# ─── 4. Deploy Packages ──────────────────────────────────────────────────────
 
-echo ">>> [3/6] Deploying packages..."
+echo ">>> [4/7] Deploying packages..."
 
 # API
 mkdir -p "${TMPDIR}/api_staging"
@@ -140,15 +152,15 @@ unzip -qo "${TMPDIR}/app.zip" -d "${TMPDIR}/app_staging"
 mkdir -p "$APP_DIR"
 rsync -a --delete "${TMPDIR}/app_staging/" "${APP_DIR}/"
 
-chown -R "${RUN_USER}:${RUN_USER}" /var/www/dahln-stack
+chown -R "${APP_USER}:${APP_USER}" /var/www/dahln-stack
 
 echo "    API deployed to ${API_DIR}"
 echo "    App deployed to ${APP_DIR}"
 echo ""
 
-# ─── 4. Setup / Update Kestrel Service ───────────────────────────────────────
+# ─── 5. Setup / Update Kestrel Service ───────────────────────────────────────
 
-echo ">>> [4/6] Configuring Kestrel service..."
+echo ">>> [5/7] Configuring Kestrel service..."
 
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 
@@ -163,7 +175,7 @@ Restart=always
 RestartSec=10
 KillSignal=SIGINT
 SyslogIdentifier=dahln-stack-api
-User=${RUN_USER}
+User=${APP_USER}
 Environment=ASPNETCORE_ENVIRONMENT=Production
 Environment=ASPNETCORE_URLS=http://localhost:${API_PORT}
 
@@ -178,9 +190,9 @@ systemctl restart "${SERVICE_NAME}.service"
 echo "    Kestrel service active."
 echo ""
 
-# ─── 5. Setup / Update Nginx ─────────────────────────────────────────────────
+# ─── 6. Setup / Update Nginx ─────────────────────────────────────────────────
 
-echo ">>> [5/6] Configuring Nginx..."
+echo ">>> [6/7] Configuring Nginx..."
 
 NGINX_CONF="/etc/nginx/sites-available/${NGINX_SITE}"
 SERVER_NAME="${DOMAIN:-_}"
@@ -233,9 +245,9 @@ systemctl restart nginx
 echo "    Nginx configured and restarted."
 echo ""
 
-# ─── 6. SSL Certificate (optional) ───────────────────────────────────────────
+# ─── 7. SSL Certificate (optional) ───────────────────────────────────────────
 
-echo ">>> [6/6] SSL certificate..."
+echo ">>> [7/7] SSL certificate..."
 
 SSL_NEEDED=false
 

@@ -1,4 +1,5 @@
-DEMO: Coming soon.
+- [ ] DEMO: Coming soon
+- [ ] Testing new install.sh script - used for either manual or automatted deployments
 
 ## Overview
 Dahln.Stack is am Opinionated .NET 10 + React starter template using a **decoupled proxy** architecture. The API and frontend run as independent processes during development and are deployed as separate applications behind Nginx in production.
@@ -84,15 +85,19 @@ dotnet ef database update --project Dahln.Stack.Database --startup-project Dahln
 ## Ignore Local App Settings Changes
 If you want to keep local configuration changes out of git:
 
-```powershell
+```
 git update-index --assume-unchanged .\Dahln.Stack.API\appsettings.json
 ```
 
 To reverse it:
 
-```powershell
+```
 git update-index --no-assume-unchanged .\Dahln.Stack.API\appsettings.json
 ```
+
+## Deployment
+
+Review DEPLOYMENT.md for instructions on how to deploy the application
 
 ## License
 This project uses the Unlicense. See `LICENSE` for the full text.

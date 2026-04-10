@@ -1,13 +1,9 @@
 name: Deploy
 
 on:
-  release:
-    types: [published]
+  # release:
+  #   types: [published]
   workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Release tag to deploy (e.g. v2026.04.08.1)'
-        required: true
 
 jobs:
   deploy:
@@ -17,60 +13,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download API x64 Release Asset
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const tagName = context.eventName === 'release'
-              ? context.payload.release.tag_name
-              : '${{ inputs.tag }}';
-
-            const release = context.eventName === 'release'
-              ? context.payload.release
-              : (await github.rest.repos.getReleaseByTag({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  tag: tagName
-                })).data;
-
-            const apiAsset = release.assets.find(a => a.name.toLowerCase().includes('x64') && a.name.endsWith('.zip'));
-            if (!apiAsset) {
-              core.setFailed(`No x64 zip asset found in release ${tagName}`);
-              return;
-            }
-            const apiDownload = await github.rest.repos.getReleaseAsset({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              asset_id: apiAsset.id,
-              headers: { accept: 'application/octet-stream' }
-            });
-            fs.writeFileSync('api-deploy.zip', Buffer.from(apiDownload.data));
-
-            const appAsset = release.assets.find(a => a.name.toLowerCase().includes('app') && a.name.endsWith('.zip'));
-            if (!appAsset) {
-              core.setFailed(`No app zip asset found in release ${tagName}`);
-              return;
-            }
-            const appDownload = await github.rest.repos.getReleaseAsset({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              asset_id: appAsset.id,
-              headers: { accept: 'application/octet-stream' }
-            });
-            fs.writeFileSync('app-deploy.zip', Buffer.from(appDownload.data));
-
-      - name: Upload zips to server
+      - name: Upload install script to server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVERADDRESS }}
           username: ${{ secrets.SERVERUSERNAME }}
           key: ${{ secrets.SERVERKEY }}
           port: ${{ secrets.SERVERPORT }}
-          source: "api-deploy.zip,app-deploy.zip"
+          source: "install.sh"
           target: "/tmp"
 
-      - name: Extract and deploy
+      - name: Run install script
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVERADDRESS }}
@@ -78,21 +31,6 @@ jobs:
           key: ${{ secrets.SERVERKEY }}
           port: ${{ secrets.SERVERPORT }}
           script: |
-            # Deploy API
-            mkdir -p /tmp/api_staging
-            unzip -o /tmp/api-deploy.zip -d /tmp/api_staging
-            sudo mkdir -p /var/www/dahln-stack/api
-            sudo rsync -av --delete --exclude='*.db' --exclude='data/' /tmp/api_staging/ /var/www/dahln-stack/api/
-
-            # Deploy React App
-            mkdir -p /tmp/app_staging
-            unzip -o /tmp/app-deploy.zip -d /tmp/app_staging
-            sudo mkdir -p /var/www/dahln-stack/app
-            sudo rsync -av --delete /tmp/app_staging/ /var/www/dahln-stack/app/
-
-            # Cleanup
-            rm -rf /tmp/api_staging /tmp/app_staging /tmp/api-deploy.zip /tmp/app-deploy.zip
-
-            # Restart services
-            sudo systemctl restart kestrel-dahln-stack.service
-            sudo systemctl restart nginx
+            chmod +x /tmp/install.sh
+            sudo /tmp/install.sh
+            rm -f /tmp/install.sh
