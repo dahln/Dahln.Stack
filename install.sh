@@ -12,7 +12,7 @@ set -euo pipefail
 # This script is idempotent and can be run repeatedly.
 # =============================================================================
 
-REPO="dahln/BlazorWasmAndApiTemplate"
+REPO="dahln/Dahln.Stack"
 API_DIR="/var/www/dahln-stack/api"
 APP_DIR="/var/www/dahln-stack/app"
 SERVICE_NAME="kestrel-dahln-stack"
