@@ -226,7 +226,7 @@ server {
 EOF
     echo "    Nginx config written."
 else
-    echo "    Nginx config already has SSL — skipping overwrite."
+    echo "    Nginx config already has SSL - skipping overwrite."
 fi
 
 # Enable site (idempotent)
@@ -278,7 +278,7 @@ if [[ "$SSL_NEEDED" == true ]]; then
     echo "    SSL configured for ${DOMAIN}."
 else
     if [[ -n "$DOMAIN" ]] && grep -q "ssl_certificate" "$NGINX_CONF" 2>/dev/null; then
-        echo "    SSL already configured — skipping."
+        echo "    SSL already configured - skipping."
     else
         echo "    Skipped (no --domain provided or SSL already set up)."
         echo "    To enable SSL later: sudo ./install.sh --domain example.com --ssl"
