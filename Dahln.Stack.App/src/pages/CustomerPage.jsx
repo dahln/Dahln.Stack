@@ -106,7 +106,7 @@ export default function CustomerPage() {
 
   return (
     <>
-      <div className="mb-3">
+      <div className="my-3">
         <Link to="/customers">
           <i className="bi bi-arrow-left-short" /> Back to Search
         </Link>
