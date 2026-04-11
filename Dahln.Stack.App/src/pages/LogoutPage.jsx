@@ -10,7 +10,7 @@ export default function LogoutPage() {
 
   useEffect(() => {
     auth.logout()
-  }, [auth])
+  }, [auth.logout])
 
   if (auth.isAuthenticated) {
     return <Alert variant="info">Logging you out...</Alert>
