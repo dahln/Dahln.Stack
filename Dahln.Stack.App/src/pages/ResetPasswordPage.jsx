@@ -46,7 +46,7 @@ export default function ResetPasswordPage() {
     }
 
     const response = await api.post(
-      'resetpassword',
+      'api/resetpassword',
       {
         email,
         resetCode: code,

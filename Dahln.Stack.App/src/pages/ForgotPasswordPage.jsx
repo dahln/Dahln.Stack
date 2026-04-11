@@ -31,7 +31,7 @@ export default function ForgotPasswordPage() {
     event.preventDefault()
 
     const response = await api.post(
-      'forgotpassword',
+      'api/forgotpassword',
       { email },
       {
         redirectOnUnauthorized: false,

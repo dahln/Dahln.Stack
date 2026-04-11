@@ -104,8 +104,8 @@ app.MapControllers();
 app.MapGet("/api/v1/metadata", () => TypedResults.Ok(new { title = "Dahln.Stack" }));
 
 //Expose identity API endpoints. Identity API doesn't include a logout method. One was created in the account controller, along with other account related endpoints.
-app.MapIdentityApi<IdentityUser>().WithTags("Identity");
-app.MapPost("/register", () => "Deprecated. Use /api/v1/account/register."); //This will disable the built in 'Identity /register' method.
+app.MapGroup("/api").MapIdentityApi<IdentityUser>().WithTags("Identity");
+app.MapPost("/api/register", () => "Deprecated. Use /api/v1/account/register."); //This will disable the built in 'Identity /register' method.
 
 // Map Scalar API reference after all endpoints are mapped so it can discover controller endpoints as well
 if (app.Environment.IsDevelopment())

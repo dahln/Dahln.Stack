@@ -24,7 +24,7 @@ export function AuthProvider({ children }) {
 
     try {
       const [userInfo, roles] = await Promise.all([
-        api.get('manage/info', {
+        api.get('api/manage/info', {
           redirectOnUnauthorized: false,
           showToast: false,
         }),
@@ -88,7 +88,7 @@ export function AuthProvider({ children }) {
       const response = await api.request(
         {
           method: 'post',
-          url: 'login?useCookies=true',
+          url: 'api/login?useCookies=true',
           data: {
             email,
             password,

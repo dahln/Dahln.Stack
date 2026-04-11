@@ -31,7 +31,7 @@ export default function ConfirmEmailResendPage() {
     event.preventDefault()
 
     const response = await api.post(
-      'resendConfirmationEmail',
+      'api/resendConfirmationEmail',
       { email },
       {
         redirectOnUnauthorized: false,

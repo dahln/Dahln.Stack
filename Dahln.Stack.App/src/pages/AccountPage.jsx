@@ -94,7 +94,7 @@ export default function AccountPage() {
     }
 
     await api.post(
-      'manage/info',
+      'api/manage/info',
       { newEmail: normalizedEmail },
       {
         redirectOnUnauthorized: false,
@@ -112,7 +112,7 @@ export default function AccountPage() {
     }
 
     await api.post(
-      'manage/info',
+      'api/manage/info',
       { oldPassword, newPassword },
       {
         redirectOnUnauthorized: false,
@@ -143,7 +143,7 @@ export default function AccountPage() {
 
   async function startTwoFactorSetup() {
     const response = await api.post(
-      'manage/2fa',
+      'api/manage/2fa',
       {},
       {
         redirectOnUnauthorized: false,
@@ -161,7 +161,7 @@ export default function AccountPage() {
 
   async function finishTwoFactorSetup() {
     await api.post(
-      'manage/2fa',
+      'api/manage/2fa',
       {
         enable: true,
         twoFactorCode: twoFactorValidationCode,
@@ -180,7 +180,7 @@ export default function AccountPage() {
 
   async function disableTwoFactor() {
     await api.post(
-      'manage/2fa',
+      'api/manage/2fa',
       {
         enable: false,
         forgetMachine: true,
@@ -200,7 +200,7 @@ export default function AccountPage() {
 
   async function resetRecoveryCodes() {
     const response = await api.post(
-      'manage/2fa',
+      'api/manage/2fa',
       {
         resetRecoveryCodes: true,
       },
@@ -217,7 +217,7 @@ export default function AccountPage() {
 
   async function forgetMachine() {
     await api.post(
-      'manage/2fa',
+      'api/manage/2fa',
       {
         forgetMachine: true,
       },
