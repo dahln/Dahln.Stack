@@ -13,7 +13,7 @@ export default function ConfirmEmailResendPage() {
   useEffect(() => {
     async function loadStatus() {
       try {
-        const response = await api.get('api/v1/account/operations', {
+        const response = await api.get('v1/account/operations', {
           redirectOnUnauthorized: false,
           showToast: false,
         })
@@ -31,7 +31,7 @@ export default function ConfirmEmailResendPage() {
     event.preventDefault()
 
     const response = await api.post(
-      'api/resendConfirmationEmail',
+      'resendConfirmationEmail',
       { email },
       {
         redirectOnUnauthorized: false,

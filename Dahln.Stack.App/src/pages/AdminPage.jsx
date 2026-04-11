@@ -25,7 +25,7 @@ export default function AdminPage() {
   const [userToDelete, setUserToDelete] = useState(null)
 
   const getSettings = useCallback(async () => {
-    const response = await api.get('api/v1/settings')
+    const response = await api.get('v1/settings')
     if (response) {
       setSystemSettings({
         emailApiKey: response.emailApiKey ?? '',
@@ -44,7 +44,7 @@ export default function AdminPage() {
     setSearch(nextSearch)
     localStorage.setItem(searchStorageKey, JSON.stringify(nextSearch))
 
-    const response = await api.post('api/v1/users', nextSearch)
+    const response = await api.post('v1/users', nextSearch)
     if (response) {
       setItems(response.results ?? [])
       setTotalFound(response.total ?? 0)
@@ -67,7 +67,7 @@ export default function AdminPage() {
   }, [getSettings, searchUsers])
 
   async function updateSettings() {
-    await api.put('api/v1/settings', systemSettings)
+    await api.put('v1/settings', systemSettings)
     toast.success('Settings saved.')
   }
 
@@ -88,7 +88,7 @@ export default function AdminPage() {
   }
 
   async function toggleAdministrator(user) {
-    await api.get(`api/v1/user/${user.id}/role/administrator`)
+    await api.get(`v1/user/${user.id}/role/administrator`)
 
     setItems((currentItems) =>
       currentItems.map((currentUser) =>
@@ -104,7 +104,7 @@ export default function AdminPage() {
       return
     }
 
-    const response = await api.delete(`api/v1/user/${userToDelete.id}`)
+    const response = await api.delete(`v1/user/${userToDelete.id}`)
     if (response) {
       setItems((currentItems) => currentItems.filter((user) => user.id !== userToDelete.id))
     }

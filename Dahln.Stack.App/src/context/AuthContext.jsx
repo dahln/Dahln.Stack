@@ -24,11 +24,11 @@ export function AuthProvider({ children }) {
 
     try {
       const [userInfo, roles] = await Promise.all([
-        api.get('api/manage/info', {
+        api.get('manage/info', {
           redirectOnUnauthorized: false,
           showToast: false,
         }),
-        api.get('api/v1/account/roles', {
+        api.get('v1/account/roles', {
           redirectOnUnauthorized: false,
           showToast: false,
         }),
@@ -68,7 +68,7 @@ export function AuthProvider({ children }) {
   const register = useCallback(async (email, password) => {
     try {
       await api.post(
-        'api/v1/account/register',
+        'v1/account/register',
         { email, password },
         {
           redirectOnUnauthorized: false,
@@ -88,7 +88,7 @@ export function AuthProvider({ children }) {
       const response = await api.request(
         {
           method: 'post',
-          url: 'api/login?useCookies=true',
+          url: 'login?useCookies=true',
           data: {
             email,
             password,
@@ -132,7 +132,7 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(async () => {
     try {
-      await api.get('api/v1/account/logout', {
+      await api.get('v1/account/logout', {
         redirectOnUnauthorized: false,
         showToast: false,
       })

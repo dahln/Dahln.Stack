@@ -24,7 +24,7 @@ export default function CustomerPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
   const loadCustomer = useCallback(async (customerId) => {
-    const response = await api.get(`api/v1/customer/${customerId}`)
+    const response = await api.get(`v1/customer/${customerId}`)
     if (!response) {
       toast.error('Customer failed to load.')
       return
@@ -63,14 +63,14 @@ export default function CustomerPage() {
     const payload = normalizeCustomerForApi(customer)
 
     if (!id) {
-      const response = await api.post('api/v1/customer', payload)
+      const response = await api.post('v1/customer', payload)
       if (response) {
         navigate(`/customer/${response}`)
       }
       return
     }
 
-    await api.put(`api/v1/customer/${id}`, payload)
+    await api.put(`v1/customer/${id}`, payload)
     setIsLocked(true)
   }
 
@@ -84,7 +84,7 @@ export default function CustomerPage() {
   }
 
   async function deleteCustomer() {
-    const response = await api.delete(`api/v1/customer/${id}`)
+    const response = await api.delete(`v1/customer/${id}`)
     if (response) {
       navigate('/customers')
     }

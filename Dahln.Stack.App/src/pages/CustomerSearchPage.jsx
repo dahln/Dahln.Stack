@@ -31,7 +31,7 @@ export default function CustomerSearchPage({ embedded = false }) {
     setSearch(nextSearch)
     localStorage.setItem(searchStorageKey, JSON.stringify(nextSearch))
 
-    const response = await api.post('api/v1/customers', nextSearch)
+    const response = await api.post('v1/customers', nextSearch)
     if (response) {
       setItems(response.results ?? [])
       setTotalFound(response.total ?? 0)

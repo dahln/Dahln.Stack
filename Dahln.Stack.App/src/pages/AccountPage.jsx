@@ -41,11 +41,11 @@ export default function AccountPage() {
   useEffect(() => {
     async function loadPage() {
       const [operationsEnabled, twoFactorStatus] = await Promise.all([
-        api.get('api/v1/account/operations', {
+        api.get('v1/account/operations', {
           redirectOnUnauthorized: false,
           showToast: false,
         }),
-        api.get('api/v1/account/2fa', {
+        api.get('v1/account/2fa', {
           redirectOnUnauthorized: false,
           showToast: false,
         }),
@@ -80,7 +80,7 @@ export default function AccountPage() {
     const normalizedEmail = newEmail.trim()
 
     const userAlreadyExists = await api.post(
-      'api/v1/account/exists',
+      'v1/account/exists',
       { email: normalizedEmail },
       {
         redirectOnUnauthorized: false,
@@ -94,7 +94,7 @@ export default function AccountPage() {
     }
 
     await api.post(
-      'api/manage/info',
+      'manage/info',
       { newEmail: normalizedEmail },
       {
         redirectOnUnauthorized: false,
@@ -112,7 +112,7 @@ export default function AccountPage() {
     }
 
     await api.post(
-      'api/manage/info',
+      'manage/info',
       { oldPassword, newPassword },
       {
         redirectOnUnauthorized: false,
@@ -127,12 +127,12 @@ export default function AccountPage() {
   }
 
   async function deleteAccount() {
-    const response = await api.delete('api/v1/account')
+    const response = await api.delete('v1/account')
     if (!response) {
       return
     }
 
-    await api.get('api/v1/account/logout', {
+    await api.get('v1/account/logout', {
       redirectOnUnauthorized: false,
       showToast: false,
     })
@@ -143,7 +143,7 @@ export default function AccountPage() {
 
   async function startTwoFactorSetup() {
     const response = await api.post(
-      'api/manage/2fa',
+      'manage/2fa',
       {},
       {
         redirectOnUnauthorized: false,
@@ -161,7 +161,7 @@ export default function AccountPage() {
 
   async function finishTwoFactorSetup() {
     await api.post(
-      'api/manage/2fa',
+      'manage/2fa',
       {
         enable: true,
         twoFactorCode: twoFactorValidationCode,
@@ -180,7 +180,7 @@ export default function AccountPage() {
 
   async function disableTwoFactor() {
     await api.post(
-      'api/manage/2fa',
+      'manage/2fa',
       {
         enable: false,
         forgetMachine: true,
@@ -200,7 +200,7 @@ export default function AccountPage() {
 
   async function resetRecoveryCodes() {
     const response = await api.post(
-      'api/manage/2fa',
+      'manage/2fa',
       {
         resetRecoveryCodes: true,
       },
@@ -217,7 +217,7 @@ export default function AccountPage() {
 
   async function forgetMachine() {
     await api.post(
-      'api/manage/2fa',
+      'manage/2fa',
       {
         forgetMachine: true,
       },

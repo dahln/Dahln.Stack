@@ -29,11 +29,11 @@ export default function LoginPage({ embedded = false }) {
     async function loadOptions() {
       try {
         const [registrationAllowed, operationsAllowed] = await Promise.all([
-          api.get('api/v1/account/operations/registration', {
+          api.get('v1/account/operations/registration', {
             redirectOnUnauthorized: false,
             showToast: false,
           }),
-          api.get('api/v1/account/operations', {
+          api.get('v1/account/operations', {
             redirectOnUnauthorized: false,
             showToast: false,
           }),

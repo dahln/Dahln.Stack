@@ -25,7 +25,7 @@ export default function ConfirmEmailPage() {
         query.set('changedEmail', changedEmail)
       }
 
-      const response = await api.get(`api/confirmEmail?${query.toString()}`, {
+      const response = await api.get(`confirmEmail?${query.toString()}`, {
         redirectOnUnauthorized: false,
         showToast: true,
       })

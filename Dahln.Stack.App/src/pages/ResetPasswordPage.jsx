@@ -19,7 +19,7 @@ export default function ResetPasswordPage() {
   useEffect(() => {
     async function loadStatus() {
       try {
-        const response = await api.get('api/v1/account/operations', {
+        const response = await api.get('v1/account/operations', {
           redirectOnUnauthorized: false,
           showToast: false,
         })
@@ -46,7 +46,7 @@ export default function ResetPasswordPage() {
     }
 
     const response = await api.post(
-      'api/resetpassword',
+      'resetpassword',
       {
         email,
         resetCode: code,
