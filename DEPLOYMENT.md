@@ -32,6 +32,15 @@ ssh user@your-server-ip
 chmod +x install.sh
 ```
 
+OR
+
+Download and install
+## Download and Run
+
+```
+wget -O - https://github.com/dahln/Dahln.Stack/blob/27958cac408da75ca8af233efb7684a32f37c014/install.sh | sudo bash
+```
+
 
 ## 3. Run the install script
 
