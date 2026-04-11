@@ -1,6 +1,6 @@
 import { toast } from 'react-toastify'
 
-const BASE_URL = '/api'
+const BASE_URL = ''
 const DEFAULT_HEADERS = {
   'Cache-Control': 'no-cache',
 }
