@@ -70,7 +70,7 @@ sudo ./install.sh
 The script is idempotent. It will download the latest release, redeploy, and restart services. Existing SSL configuration is preserved.
 
 
-## CI/CD (optional)
+## Automation (optional)
 
 Fork or clone the repo. In your copy, setup GitHub repo secrets for SSH access:
 1. **SERVERADDRESS** - server IP or hostname
@@ -79,7 +79,7 @@ Fork or clone the repo. In your copy, setup GitHub repo secrets for SSH access:
 4. **SERVERKEY** - SSH private key
 
 The project uses two GitHub Actions workflows:
-1. **cicd.yml** - triggers on push to `master`. Builds the API (x64 + ARM64) and React app, then creates a GitHub Release.
+1. **BuildReleasePackages.yml** - triggers on push to `master`. Builds the API (x64 + ARM64) and React app, then creates a GitHub Release package set.
 2. **deploy.yml** - triggers when a release is published. Downloads artifacts, deploys to the server, and restarts services. Can also be triggered manually for any past release tag.
 
 
