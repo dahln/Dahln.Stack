@@ -279,24 +279,22 @@ export default function CustomerPage() {
       <hr />
 
       {!isLocked ? (
-        <Row>
-          <Col md={6}>
-            {id ? (
-              <Button variant="warning" onClick={() => setIsDeleteDialogOpen(true)}>
-                Delete
-              </Button>
-            ) : null}
-          </Col>
+        <div className="customer-action-row">
+          {id ? (
+            <Button variant="warning" onClick={() => setIsDeleteDialogOpen(true)}>
+              Delete
+            </Button>
+          ) : null}
 
-          <Col md={6} className="text-md-end d-flex justify-content-md-end gap-2 flex-wrap">
-            {id ? (
-              <Button variant="outline-danger" onClick={cancelChanges}>
-                Cancel Changes
-              </Button>
-            ) : null}
-            <Button onClick={saveCustomer}>Save</Button>
-          </Col>
-        </Row>
+          <div className="customer-action-spacer" />
+
+          {id ? (
+            <Button variant="outline-danger" onClick={cancelChanges}>
+              Cancel Changes
+            </Button>
+          ) : null}
+          <Button onClick={saveCustomer}>Save</Button>
+        </div>
       ) : null}
 
       <ConfirmDialog

@@ -33,3 +33,65 @@ button {
   min-height: 100vh;
 }
 
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: rgba(0, 0, 0, 0.45);
+}
+
+.loading-overlay__panel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1.2rem;
+  border-radius: 0.6rem;
+  background-color: rgba(33, 37, 41, 0.92);
+  color: #fff;
+  box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.25);
+}
+
+.search-input-group > .form-control,
+.search-input-group > .btn,
+.search-input-group > .input-group-text,
+.search-input-group > .form-select {
+  border-color: var(--bs-secondary);
+}
+
+.search-input-group > .form-control:focus,
+.search-input-group > .btn:focus,
+.search-input-group > .input-group-text:focus,
+.search-input-group > .form-select:focus {
+  border-color: var(--bs-secondary);
+}
+
+.search-input-group > .page-size-label {
+  font-size: 0.7rem;
+  line-height: 1.05;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.25rem;
+  padding: 0.2rem 0.4rem;
+}
+
+.customer-action-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.customer-action-row > .btn {
+  white-space: nowrap;
+}
+
+.customer-action-spacer {
+  flex: 1 1 auto;
+}
+

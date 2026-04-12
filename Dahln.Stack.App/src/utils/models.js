@@ -13,6 +13,8 @@ export const genderLabels = Object.fromEntries(
   genderOptions.map((option) => [option.value, option.label]),
 )
 
+export const pageSizeOptions = [10, 15, 25, 50]
+
 export function createSearch(sortBy = '') {
   return {
     filterText: '',
@@ -47,7 +49,9 @@ export function toApiSearch(search, page) {
   return {
     filterText: search.filterText ?? '',
     page: typeof page === 'number' ? page : search.page,
-    pageSize: search.pageSize,
+    pageSize: Number.isFinite(Number(search.pageSize))
+      ? Math.max(1, Number(search.pageSize))
+      : 15,
     sortBy: search.sortBy,
     sortDirection: search.sortDirection,
   }

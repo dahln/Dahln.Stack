@@ -6,6 +6,7 @@ import {
   createSearch,
   formatPageCount,
   genderLabels,
+  pageSizeOptions,
   sortDirections,
   toApiSearch,
 } from '../utils/models'
@@ -73,6 +74,18 @@ export default function CustomerSearchPage({ embedded = false }) {
     await searchCustomers(nextSearch.page, false, nextSearch)
   }
 
+  async function handlePageSizeChange(event) {
+    const pageSize = Number(event.target.value)
+    const nextSearch = {
+      ...search,
+      page: 0,
+      pageSize,
+    }
+
+    setSearch(nextSearch)
+    await searchCustomers(0, false, nextSearch)
+  }
+
   const pageCount = formatPageCount(totalFound, search.pageSize)
 
   return (
@@ -87,7 +100,7 @@ export default function CustomerSearchPage({ embedded = false }) {
 
       <div className="d-flex flex-wrap justify-content-end gap-2 align-items-center mb-2">
         <Form onSubmit={handleSubmit} autoComplete="off" style={{ maxWidth: '28rem', width: '100%' }}>
-          <div className="input-group">
+          <div className="input-group search-input-group">
             <Form.Control
               type="text"
               value={search.filterText}
@@ -102,6 +115,23 @@ export default function CustomerSearchPage({ embedded = false }) {
               <i className="bi bi-search me-2" />
               Search
             </Button>
+            <span className="input-group-text page-size-label">
+              <span>Page</span>
+              <span>Size</span>
+            </span>
+            <Form.Select
+              value={search.pageSize}
+              onChange={handlePageSizeChange}
+              aria-label="Select page size"
+              className="flex-grow-0"
+              style={{ width: '4.5rem' }}
+            >
+              {pageSizeOptions.map((sizeOption) => (
+                <option key={sizeOption} value={sizeOption}>
+                  {sizeOption}
+                </option>
+              ))}
+            </Form.Select>
           </div>
         </Form>
       </div>
@@ -216,7 +246,11 @@ function SortableHeader({ label, column, search, onSort, width }) {
 
   return (
     <th style={{ width }}>
-      <button type="button" className="btn btn-link text-decoration-none" onClick={() => onSort(column)}>
+      <button
+        type="button"
+        className="btn btn-link text-decoration-none d-inline-flex align-items-center text-nowrap"
+        onClick={() => onSort(column)}
+      >
         {label}
         {icon ? <i className={`${icon} ms-1`} /> : null}
       </button>
