@@ -1,3 +1,8 @@
+[![Build and Release Packages](https://github.com/dahln/Dahln.Stack/actions/workflows/BuildReleasePackages.yml/badge.svg)](https://github.com/dahln/Dahln.Stack/actions/workflows/BuildReleasePackages.yml)
+[![Deploy](https://github.com/dahln/Dahln.Stack/actions/workflows/deploy.yml/badge.svg)](https://github.com/dahln/Dahln.Stack/actions/workflows/deploy.yml)
+[![PR Validation](https://github.com/dahln/Dahln.Stack/actions/workflows/pr-validation.yml/badge.svg)](https://github.com/dahln/Dahln.Stack/actions/workflows/pr-validation.yml)
+
+
 - [ ] DEMO: Coming soon
 - [ ] Testing new install.sh script - used for either manual or automatted deployments
 - [ ] Add badges
