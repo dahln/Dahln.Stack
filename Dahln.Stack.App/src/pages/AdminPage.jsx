@@ -3,7 +3,13 @@ import { Button, Card, Form, Table } from 'react-bootstrap'
 import { toast } from 'react-toastify'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { api } from '../services/apiClient'
-import { createSearch, formatPageCount, sortDirections, toApiSearch } from '../utils/models'
+import {
+  createSearch,
+  formatPageCount,
+  pageSizeOptions,
+  sortDirections,
+  toApiSearch,
+} from '../utils/models'
 
 const searchStorageKey = 'Usersearch'
 const defaultSortBy = 'Email'
@@ -85,6 +91,18 @@ export default function AdminPage() {
 
     setSearch(nextSearch)
     await searchUsers(nextSearch.page, false, nextSearch)
+  }
+
+  async function handlePageSizeChange(event) {
+    const pageSize = Number(event.target.value)
+    const nextSearch = {
+      ...search,
+      page: 0,
+      pageSize,
+    }
+
+    setSearch(nextSearch)
+    await searchUsers(0, false, nextSearch)
   }
 
   async function toggleAdministrator(user) {
@@ -193,7 +211,7 @@ export default function AdminPage() {
           }}
           autoComplete="off"
         >
-          <div className="input-group">
+          <div className="input-group search-input-group">
             <Form.Control
               type="text"
               value={search.filterText}
@@ -208,6 +226,23 @@ export default function AdminPage() {
               <i className="bi bi-search me-2" />
               Search
             </Button>
+            <span className="input-group-text page-size-label">
+              <span>Page</span>
+              <span>Size</span>
+            </span>
+            <Form.Select
+              value={search.pageSize}
+              onChange={handlePageSizeChange}
+              aria-label="Select page size"
+              className="flex-grow-0"
+              style={{ width: '4.5rem' }}
+            >
+              {pageSizeOptions.map((sizeOption) => (
+                <option key={sizeOption} value={sizeOption}>
+                  {sizeOption}
+                </option>
+              ))}
+            </Form.Select>
           </div>
         </Form>
       </div>
@@ -229,7 +264,7 @@ export default function AdminPage() {
               <th style={{ width: '50%' }}>
                 <button
                   type="button"
-                  className="btn btn-link"
+                  className="btn btn-link text-decoration-none"
                   onClick={() => handleSort('Email')}
                 >
                   Email
