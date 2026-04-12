@@ -6,8 +6,8 @@
 
 
 - [ ] DEMO: Coming soon
-- [ ] Testing new install.sh script - used for either manual or automatted deployments
-- [ ] Add badges
+- [x] Testing new install.sh script - used for either manual or automatted deployments
+- [x] Add badges
 
 ## Overview
 Dahln.Stack is am Opinionated .NET 10 + React starter template using a **decoupled proxy** architecture. The API and frontend run as independent processes during development and are deployed as separate applications behind Nginx in production.
