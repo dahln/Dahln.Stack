@@ -1,6 +1,8 @@
 [![Build and Release Packages](https://github.com/dahln/Dahln.Stack/actions/workflows/BuildReleasePackages.yml/badge.svg)](https://github.com/dahln/Dahln.Stack/actions/workflows/BuildReleasePackages.yml)
 [![Deploy](https://github.com/dahln/Dahln.Stack/actions/workflows/deploy.yml/badge.svg)](https://github.com/dahln/Dahln.Stack/actions/workflows/deploy.yml)
 [![PR Validation](https://github.com/dahln/Dahln.Stack/actions/workflows/pr-validation.yml/badge.svg)](https://github.com/dahln/Dahln.Stack/actions/workflows/pr-validation.yml)
+[![Latest Release](https://img.shields.io/github/v/release/dahln/Dahln.Stack?label=Latest%20Release)](https://github.com/dahln/Dahln.Stack/releases/latest)
+
 
 
 - [ ] DEMO: Coming soon
