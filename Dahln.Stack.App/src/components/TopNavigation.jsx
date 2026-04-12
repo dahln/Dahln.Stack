@@ -1,6 +1,6 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Container, Nav, Navbar } from 'react-bootstrap'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 
@@ -8,8 +8,15 @@ import { useTheme } from '../context/ThemeContext'
  * Main top navigation with auth-aware links.
  */
 export default function TopNavigation() {
+  const [expanded, setExpanded] = useState(false)
+  const location = useLocation()
   const auth = useAuth()
   const { isDarkMode, toggleTheme } = useTheme()
+
+  // Close navbar on any navigation change
+  useEffect(() => {
+    setExpanded(false)
+  }, [location.pathname])
 
   const themeLabel = isDarkMode ? 'Dark Mode' : 'Light Mode'
 
@@ -37,7 +44,15 @@ export default function TopNavigation() {
   )
 
   return (
-    <Navbar bg="dark" data-bs-theme="dark" expand="lg" className="shadow-sm">
+    <Navbar
+      bg="dark"
+      data-bs-theme="dark"
+      expand="lg"
+      className="shadow-sm"
+      sticky="top"
+      expanded={expanded}
+      onToggle={(exp) => setExpanded(exp)}
+    >
       <Container fluid>
         <Navbar.Brand as={Link} to="/" className="ms-2">
           <i className="bi bi-stack me-2" style={{ color: 'mediumpurple' }} />
