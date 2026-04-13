@@ -19,28 +19,16 @@ Create a Linux server (e.g. Ubuntu 24.04). In your domain registrar, create an *
 Allow DNS to propagate before proceeding - this is required for SSL certificate provisioning.
 
 
-## 2. Copy the install script to the server
+## 2. Connect to the server
 
-Download
-```
-wget https://raw.githubusercontent.com/dahln/Dahln.Stack/27958cac408da75ca8af233efb7684a32f37c014/install.sh
-```
-
-From your local machine, copy `install.sh` to the server and make it executable:
-```
-scp install.sh user@your-server-ip:~/install.sh
-```
 ```
 ssh user@your-server-ip
 ```
-```
-chmod +x install.sh
-```
 
-## 3. Run the install script
+## 3. Download and run the install script in one command
 
 ```
-sudo ./install.sh --domain example.com
+curl -fsSL https://raw.githubusercontent.com/dahln/Dahln.Stack/27958cac408da75ca8af233efb7684a32f37c014/install.sh | sudo bash -s -- --domain web.dahln.com
 ```
 Replace `example.com` with your domain. The script will:
 - Install all dependencies (nginx, ufw, unzip, rsync, curl, jq)
@@ -63,9 +51,9 @@ Visit your domain to see the active site.
 
 ## Updating
 
-To update to the latest release, run the script again - no flags needed:
+To update to the latest release, run the installer again - no flags needed:
 ```
-sudo ./install.sh
+curl -fsSL https://raw.githubusercontent.com/dahln/Dahln.Stack/27958cac408da75ca8af233efb7684a32f37c014/install.sh | sudo bash
 ```
 The script is idempotent. It will download the latest release, redeploy, and restart services. Existing SSL configuration is preserved.
 
