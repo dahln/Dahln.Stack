@@ -28,7 +28,7 @@ ssh user@your-server-ip
 ## 3. Download and run the install script in one command
 
 ```
-curl -fsSL https://raw.githubusercontent.com/dahln/Dahln.Stack/27958cac408da75ca8af233efb7684a32f37c014/install.sh | sudo bash -s -- --domain web.dahln.com
+curl -fsSL https://raw.githubusercontent.com/dahln/Dahln.Stack/master/install.sh | sudo bash -s -- --domain example.com
 ```
 Replace `example.com` with your domain. The script will:
 - Install all dependencies (nginx, ufw, unzip, rsync, curl, jq)
@@ -53,7 +53,7 @@ Visit your domain to see the active site.
 
 To update to the latest release, run the installer again - no flags needed:
 ```
-curl -fsSL https://raw.githubusercontent.com/dahln/Dahln.Stack/27958cac408da75ca8af233efb7684a32f37c014/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/dahln/Dahln.Stack/master/install.sh | sudo bash
 ```
 The script is idempotent. It will download the latest release, redeploy, and restart services. Existing SSL configuration is preserved.
 
