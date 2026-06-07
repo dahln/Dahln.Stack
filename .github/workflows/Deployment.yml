@@ -181,7 +181,6 @@ jobs:
             '    SERVER_NAME="${APPLICATION_DOMAIN}"' \
             'fi' \
             '' \
-            '${SUDO} dnf -y update' \
             '${SUDO} dnf -y install unzip rsync nginx firewalld curl jq policycoreutils-python-utils' \
             '' \
             '${SUDO} systemctl enable --now firewalld >/dev/null 2>&1 || true' \
@@ -206,6 +205,12 @@ jobs:
             '${SUDO} rsync -a --delete "${staging_dir}/app/" "${APP_DIR}/"' \
             '${SUDO} chmod +x "${API_DIR}/${APPLICATION_API_EXECUTABLE}"' \
             '${SUDO} chown -R "${APPLICATION_USER}:${APPLICATION_USER}" "${APPLICATION_DEPLOY_ROOT}"' \
+            'if ! ${SUDO} test -f "${APP_DIR}/index.html"; then' \
+            '    echo "Expected ${APP_DIR}/index.html after deployment, but it was not found." >&2' \
+            '    exit 1' \
+            'fi' \
+            '${SUDO} semanage fcontext -a -t httpd_sys_content_t "${APP_DIR}(/.*)?" >/dev/null 2>&1 || ${SUDO} semanage fcontext -m -t httpd_sys_content_t "${APP_DIR}(/.*)?" >/dev/null 2>&1' \
+            '${SUDO} restorecon -RF "${APP_DIR}" >/dev/null 2>&1 || true' \
             '' \
             "printf '%s\\n' '[Unit]' \"Description=\${APPLICATION_NAME} API\" 'After=network.target' 'Wants=network.target' '' '[Service]' \"WorkingDirectory=\${API_DIR}\" \"ExecStart=\${API_DIR}/\${APPLICATION_API_EXECUTABLE}\" 'Restart=always' 'RestartSec=10' 'KillSignal=SIGINT' \"SyslogIdentifier=\${APPLICATION_SERVICE_NAME}\" \"User=\${APPLICATION_USER}\" 'Environment=ASPNETCORE_ENVIRONMENT=Production' \"Environment=ASPNETCORE_URLS=http://localhost:\${APPLICATION_API_PORT}\" '' '[Install]' 'WantedBy=multi-user.target' | \${SUDO} tee \"\${SERVICE_FILE}\" > /dev/null" \
             '' \
@@ -235,8 +240,7 @@ jobs:
             'if [[ "${ssl_needed}" == "true" ]]; then' \
             '    ${SUDO} dnf -y install certbot python3-certbot-nginx' \
             '    ${SUDO} certbot --nginx -d "${APPLICATION_DOMAIN}" --non-interactive --agree-tos --redirect --register-unsafely-without-email' \
-            '    ${SUDO} systemctl enable certbot.timer >/dev/null 2>&1 || true' \
-            '    ${SUDO} certbot renew --dry-run' \
+            '    ${SUDO} systemctl enable --now certbot-renew.timer >/dev/null 2>&1 || ${SUDO} systemctl enable --now certbot.timer >/dev/null 2>&1 || true' \
             'fi')
 
           ssh -p "$server_port" "$SERVER_USERNAME@$SERVER_ADDRESS" "${remote_env}bash -lc $(printf '%q' "$remote_script")"

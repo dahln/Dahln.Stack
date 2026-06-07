@@ -148,9 +148,10 @@ The deployment workflow then:
 - configures `firewalld`
 - creates the application system user when missing
 - deploys the API and app packages with `rsync`
+- verifies that `index.html` exists after app deployment
 - creates or updates the systemd service
 - creates or updates the Nginx site configuration
-- enables SELinux proxy access for Nginx
+- enables SELinux proxy access for Nginx and labels the static app files for Nginx access
 - provisions a Let's Encrypt certificate the first time `APPLICATIONDOMAIN` is set and SSL is not already configured
 
 Subsequent releases update the deployed files and restart the service stack. Certificate setup is skipped after SSL is already configured.
