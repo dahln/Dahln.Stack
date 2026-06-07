@@ -110,7 +110,9 @@ git update-index --no-assume-unchanged .\Dahln.Stack.API\appsettings.json
 
 ## Deployment
 
-Deployment runs through the `Deployment.yml` GitHub Actions workflow when a new GitHub Release is published. The workflow targets Fedora x64, downloads the release assets on the GitHub runner with the built-in `GITHUB_TOKEN`, uploads the packages to the server over SSH, and configures the server in place. No GitHub login or token is left on the server.
+Deployment runs through the `Deployment.yml` GitHub Actions workflow. It deploys automatically when a GitHub Release is published, and it also runs after `Build and Release Packages` completes successfully. You can still run it manually with `workflow_dispatch`: provide a `release_tag` to deploy a specific release, or leave `release_tag` empty to deploy the latest release.
+
+The workflow targets Fedora x64, downloads the release assets on the GitHub runner with the built-in `GITHUB_TOKEN`, uploads the packages to the server over SSH, and configures the server in place. No GitHub login or token is left on the server.
 
 Before the first deployment:
 

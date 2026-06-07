@@ -4,7 +4,17 @@ on:
   release:
     types:
       - published
+  workflow_run:
+    workflows:
+      - Build and Release Packages
+    types:
+      - completed
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Optional release tag to deploy (for example: v2026.06.07.2). Leave empty to deploy latest release.'
+        required: false
+        type: string
 
 
 permissions:
@@ -12,9 +22,9 @@ permissions:
 
 jobs:
   deploy:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     env:
-      RELEASE_TAG: ${{ github.event.release.tag_name }}
       SERVER_ADDRESS: ${{ secrets.SERVERADDRESS }}
       SERVER_PORT: ${{ secrets.SERVERPORT }}
       SERVER_USERNAME: ${{ secrets.SERVERUSERNAME }}
@@ -48,6 +58,34 @@ jobs:
             echo "::error::Missing required secret for SERVERKEY."
             exit 1
           fi
+
+      - name: Resolve release tag
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          RELEASE_TAG_INPUT: ${{ inputs.release_tag }}
+          RELEASE_TAG_FROM_EVENT: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+
+          resolved_release_tag=""
+
+          if [[ "$EVENT_NAME" == "release" ]]; then
+            resolved_release_tag="$RELEASE_TAG_FROM_EVENT"
+          elif [[ -n "$RELEASE_TAG_INPUT" ]]; then
+            resolved_release_tag="$RELEASE_TAG_INPUT"
+          else
+            resolved_release_tag=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq '.tagName')
+          fi
+
+          if [[ -z "$resolved_release_tag" ]]; then
+            echo "::error::Could not resolve a release tag for deployment."
+            exit 1
+          fi
+
+          echo "Resolved release tag: $resolved_release_tag"
+          echo "RELEASE_TAG=$resolved_release_tag" >> "$GITHUB_ENV"
 
       - name: Download published release assets
         shell: bash
