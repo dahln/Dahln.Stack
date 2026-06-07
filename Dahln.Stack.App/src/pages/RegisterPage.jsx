@@ -1,11 +1,15 @@
-import { useState } from 'react'
-import { Alert, Button, Card, Col, Form, Row } from 'react-bootstrap'
+﻿import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { useAuth } from '../context/AuthContext'
 
 /**
  * Account registration form.
+ *
+ * Validates the submitted fields client-side first, then delegates to
+ * `auth.register()`.  On success the user is redirected to the home route.
+ * Server-side validation errors (e.g. email already taken) are displayed as
+ * individual alert banners above the form.
  */
 export default function RegisterPage() {
   const auth = useAuth()
@@ -14,36 +18,39 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+
+  // Array of validation or server error messages shown above the form.
   const [errorList, setErrorList] = useState([])
 
-  async function handleSubmit(event) {
-    event.preventDefault()
+  /** Validates fields client-side, then calls the register API, and redirects on success. */
+  async function handleSubmit(submitEvent) {
+    submitEvent.preventDefault()
 
-    const nextErrorList = []
-    const normalizedEmail = email.trim()
+    const validationErrors = []
+    const trimmedEmail = email.trim()
 
-    if (!normalizedEmail) {
-      nextErrorList.push('Email is required.')
+    // -- Client-side validation ----------------------------------------------
+    if (!trimmedEmail) {
+      validationErrors.push('Email is required.')
     }
-
     if (!password.trim()) {
-      nextErrorList.push('Password is required.')
+      validationErrors.push('Password is required.')
     }
-
     if (!confirmPassword.trim()) {
-      nextErrorList.push('Please confirm your password.')
+      validationErrors.push('Please confirm your password.')
     }
-
     if (password !== confirmPassword) {
-      nextErrorList.push("Passwords don't match.")
+      validationErrors.push("Passwords don't match.")
     }
 
-    if (nextErrorList.length > 0) {
-      setErrorList(nextErrorList)
+    if (validationErrors.length > 0) {
+      setErrorList(validationErrors)
       return
     }
 
-    const result = await auth.register(normalizedEmail, password)
+    // -- Server registration -------------------------------------------------
+    const result = await auth.register(trimmedEmail, password)
+
     if (!result.succeeded) {
       setErrorList(result.errorList ?? ['Registration failed.'])
       return
@@ -53,68 +60,77 @@ export default function RegisterPage() {
     navigate('/')
   }
 
+  // If the user is already authenticated, show a status message instead of
+  // the registration form.
   if (auth.isAuthenticated) {
-    return <Alert variant="success">You are logged in as {auth.user?.email}.</Alert>
+    return <div className="alert alert-success" role="alert">You are logged in as {auth.user?.email}.</div>
   }
 
   return (
-    <Row className="mt-5">
-      <Col lg={4} md={6} className="mx-auto">
-        <Card className="feature-card">
-          <Card.Header>
+    <div className="row mt-5">
+      <div className="col-md-6 col-lg-4 mx-auto">
+        <div className="card feature-card">
+          <div className="card-header">
             <h2 className="h3 mb-0">Register</h2>
-          </Card.Header>
+          </div>
 
-          <Card.Body>
-            {errorList.map((error) => (
-              <Alert key={error} variant="danger">
-                {error}
-              </Alert>
+          <div className="card-body">
+            {/* Server or validation error banners */}
+            {errorList.map((errorMessage) => (
+              <div key={errorMessage} className="alert alert-danger" role="alert">
+                {errorMessage}
+              </div>
             ))}
 
-            <Form onSubmit={handleSubmit} autoComplete="on">
-              <Form.Group className="mb-3" controlId="registerEmail">
-                <Form.Label>Email</Form.Label>
-                <Form.Control
+            <form onSubmit={handleSubmit} autoComplete="on">
+              <div className="mb-3">
+                <label className="form-label" htmlFor="registerEmail">Email</label>
+                <input
+                  id="registerEmail"
+                  className="form-control"
                   type="email"
                   autoFocus
                   placeholder="Enter your email address"
                   value={email}
-                  onChange={(event) => setEmail(event.target.value)}
+                  onChange={(changeEvent) => setEmail(changeEvent.target.value)}
                 />
-              </Form.Group>
+              </div>
 
-              <Form.Group className="mb-3" controlId="registerPassword">
-                <Form.Label>Password</Form.Label>
-                <Form.Control
+              <div className="mb-3">
+                <label className="form-label" htmlFor="registerPassword">Password</label>
+                <input
+                  id="registerPassword"
+                  className="form-control"
                   type="password"
                   placeholder="Enter your password"
                   value={password}
-                  onChange={(event) => setPassword(event.target.value)}
+                  onChange={(changeEvent) => setPassword(changeEvent.target.value)}
                 />
-              </Form.Group>
+              </div>
 
-              <Form.Group className="mb-3" controlId="registerConfirmPassword">
-                <Form.Label>Retype Password</Form.Label>
-                <Form.Control
+              <div className="mb-3">
+                <label className="form-label" htmlFor="registerConfirmPassword">Retype Password</label>
+                <input
+                  id="registerConfirmPassword"
+                  className="form-control"
                   type="password"
                   placeholder="Re-enter your password"
                   value={confirmPassword}
-                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  onChange={(changeEvent) => setConfirmPassword(changeEvent.target.value)}
                 />
-              </Form.Group>
+              </div>
 
-              <Button type="submit">Register</Button>
-            </Form>
+              <button type="submit" className="btn btn-primary">Register</button>
+            </form>
 
             <div className="mt-3">
               <Link to="/">
                 <strong>Have an account? Sign in here.</strong>
               </Link>
             </div>
-          </Card.Body>
-        </Card>
-      </Col>
-    </Row>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }

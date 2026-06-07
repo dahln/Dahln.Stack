@@ -1,0 +1,204 @@
+name: Deployment
+
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ github.event.release.tag_name }}
+      SERVER_ADDRESS: ${{ secrets.SERVERADDRESS }}
+      SERVER_PORT: ${{ secrets.SERVERPORT }}
+      SERVER_USERNAME: ${{ secrets.SERVERUSERNAME }}
+      APPLICATION_DOMAIN: ${{ secrets.APPLICATIONDOMAIN }}
+      APPLICATION_NAME: ${{ secrets.APPLICATIONNAME }}
+      APPLICATION_USER: ${{ secrets.APPLICATIONUSER }}
+      APPLICATION_API_PORT: ${{ secrets.APPLICATIONAPIPORT }}
+
+    steps:
+      - name: Validate deployment configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          required_vars=(
+            SERVER_ADDRESS
+            SERVER_USERNAME
+            APPLICATION_NAME
+            APPLICATION_USER
+            APPLICATION_API_PORT
+          )
+
+          for var_name in "${required_vars[@]}"; do
+            if [[ -z "${!var_name}" ]]; then
+              echo "::error::Missing required secret for ${var_name}."
+              exit 1
+            fi
+          done
+
+          if [[ -z "${{ secrets.SERVERKEY }}" ]]; then
+            echo "::error::Missing required secret for SERVERKEY."
+            exit 1
+          fi
+
+      - name: Download published release assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          api_archive="${APPLICATION_NAME}.API-${RELEASE_TAG}-linux-x64.zip"
+          app_archive="${APPLICATION_NAME}.App-${RELEASE_TAG}.zip"
+
+          mkdir -p release-assets
+          gh release download "$RELEASE_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --dir release-assets \
+            --pattern "$api_archive" \
+            --pattern "$app_archive"
+
+      - name: Configure SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SERVERKEY }}
+
+      - name: Trust deployment host
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          server_port="${SERVER_PORT:-22}"
+
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "$server_port" "$SERVER_ADDRESS" >> ~/.ssh/known_hosts
+
+      - name: Upload release packages
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          server_port="${SERVER_PORT:-22}"
+          api_archive="${APPLICATION_NAME}.API-${RELEASE_TAG}-linux-x64.zip"
+          app_archive="${APPLICATION_NAME}.App-${RELEASE_TAG}.zip"
+
+          scp -P "$server_port" \
+            "release-assets/$api_archive" \
+            "release-assets/$app_archive" \
+            "$SERVER_USERNAME@$SERVER_ADDRESS:/tmp/"
+
+      - name: Deploy release over SSH
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          server_port="${SERVER_PORT:-22}"
+
+          remote_vars=(
+            RELEASE_TAG
+            APPLICATION_DOMAIN
+            APPLICATION_NAME
+            APPLICATION_USER
+            APPLICATION_API_PORT
+          )
+
+          remote_env=""
+          for var_name in "${remote_vars[@]}"; do
+            remote_env+="${var_name}=$(printf '%q' "${!var_name}") "
+          done
+
+          remote_script=$(printf '%s\n' \
+            'set -euo pipefail' \
+            '' \
+            'if [[ $(id -u) -eq 0 ]]; then' \
+            '    SUDO=""' \
+            'else' \
+            '    SUDO="sudo -n"' \
+            '    ${SUDO} true >/dev/null' \
+            'fi' \
+            '' \
+            'APPLICATION_SLUG="${APPLICATION_NAME,,}"' \
+            'APPLICATION_DEPLOY_ROOT="/var/www/${APPLICATION_SLUG}"' \
+            'APPLICATION_SERVICE_NAME="kestrel-${APPLICATION_SLUG}"' \
+            'APPLICATION_NGINX_SITE="${APPLICATION_SLUG}"' \
+            'APPLICATION_API_EXECUTABLE="${APPLICATION_NAME}.API"' \
+            'APPLICATION_API_ROUTE_PREFIX="/api"' \
+            'API_ARCHIVE="${APPLICATION_NAME}.API-${RELEASE_TAG}-linux-x64.zip"' \
+            'APP_ARCHIVE="${APPLICATION_NAME}.App-${RELEASE_TAG}.zip"' \
+            'API_DIR="${APPLICATION_DEPLOY_ROOT}/api"' \
+            'APP_DIR="${APPLICATION_DEPLOY_ROOT}/app"' \
+            'NGINX_CONF="/etc/nginx/conf.d/${APPLICATION_NGINX_SITE}.conf"' \
+            'SERVICE_FILE="/etc/systemd/system/${APPLICATION_SERVICE_NAME}.service"' \
+            'SERVER_NAME="_"' \
+            '' \
+            'if [[ -n "${APPLICATION_DOMAIN}" ]]; then' \
+            '    SERVER_NAME="${APPLICATION_DOMAIN}"' \
+            'fi' \
+            '' \
+            '${SUDO} dnf -y update' \
+            '${SUDO} dnf -y install unzip rsync nginx firewalld curl jq policycoreutils-python-utils' \
+            '' \
+            '${SUDO} systemctl enable --now firewalld >/dev/null 2>&1 || true' \
+            '${SUDO} firewall-cmd --permanent --add-service=http >/dev/null 2>&1 || true' \
+            '${SUDO} firewall-cmd --permanent --add-service=https >/dev/null 2>&1 || true' \
+            '${SUDO} firewall-cmd --permanent --add-service=ssh >/dev/null 2>&1 || true' \
+            '${SUDO} firewall-cmd --reload >/dev/null 2>&1 || true' \
+            '' \
+            'if ! id "${APPLICATION_USER}" >/dev/null 2>&1; then' \
+            '    ${SUDO} useradd --system --no-create-home --shell /sbin/nologin "${APPLICATION_USER}"' \
+            'fi' \
+            '' \
+            'staging_dir=$(mktemp -d)' \
+            'trap '\''rm -rf "${staging_dir}"; rm -f "/tmp/${API_ARCHIVE}" "/tmp/${APP_ARCHIVE}"'\'' EXIT' \
+            '' \
+            'mkdir -p "${staging_dir}/api" "${staging_dir}/app"' \
+            'unzip -qo "/tmp/${API_ARCHIVE}" -d "${staging_dir}/api"' \
+            'unzip -qo "/tmp/${APP_ARCHIVE}" -d "${staging_dir}/app"' \
+            '' \
+            '${SUDO} mkdir -p "${API_DIR}" "${APP_DIR}"' \
+            '${SUDO} rsync -a --delete --exclude='\''*.db'\'' --exclude='\''data/'\'' "${staging_dir}/api/" "${API_DIR}/"' \
+            '${SUDO} rsync -a --delete "${staging_dir}/app/" "${APP_DIR}/"' \
+            '${SUDO} chmod +x "${API_DIR}/${APPLICATION_API_EXECUTABLE}"' \
+            '${SUDO} chown -R "${APPLICATION_USER}:${APPLICATION_USER}" "${APPLICATION_DEPLOY_ROOT}"' \
+            '' \
+            "printf '%s\\n' '[Unit]' \"Description=\${APPLICATION_NAME} API\" 'After=network.target' 'Wants=network.target' '' '[Service]' \"WorkingDirectory=\${API_DIR}\" \"ExecStart=\${API_DIR}/\${APPLICATION_API_EXECUTABLE}\" 'Restart=always' 'RestartSec=10' 'KillSignal=SIGINT' \"SyslogIdentifier=\${APPLICATION_SERVICE_NAME}\" \"User=\${APPLICATION_USER}\" 'Environment=ASPNETCORE_ENVIRONMENT=Production' \"Environment=ASPNETCORE_URLS=http://localhost:\${APPLICATION_API_PORT}\" '' '[Install]' 'WantedBy=multi-user.target' | \${SUDO} tee \"\${SERVICE_FILE}\" > /dev/null" \
+            '' \
+            '${SUDO} systemctl daemon-reload' \
+            '${SUDO} systemctl enable "${APPLICATION_SERVICE_NAME}.service" >/dev/null 2>&1' \
+            '${SUDO} systemctl restart "${APPLICATION_SERVICE_NAME}.service"' \
+            '' \
+            'if [[ ! -f "${NGINX_CONF}" ]] || ! grep -q "ssl_certificate" "${NGINX_CONF}"; then' \
+            '    route_prefix="${APPLICATION_API_ROUTE_PREFIX}"' \
+            '    if [[ "${route_prefix}" != */ ]]; then' \
+            '        route_prefix="${route_prefix}/"' \
+            '    fi' \
+            '' \
+            "    printf '%s\\n' 'server {' '    listen 80;' \"    server_name \${SERVER_NAME};\" '' \"    root \${APP_DIR};\" '    index index.html;' '' \"    location \${route_prefix} {\" \"        proxy_pass         http://127.0.0.1:\${APPLICATION_API_PORT};\" '        proxy_http_version 1.1;' '        proxy_set_header   Host \$host;' '        proxy_set_header   X-Real-IP \$remote_addr;' '        proxy_set_header   X-Forwarded-For \$proxy_add_x_forwarded_for;' '        proxy_set_header   X-Forwarded-Proto \$scheme;' '    }' '' '    location / {' '        try_files \$uri \$uri/ /index.html;' '    }' '}' | \${SUDO} tee \"\${NGINX_CONF}\" > /dev/null" \
+            'fi' \
+            '' \
+            '${SUDO} setsebool -P httpd_can_network_connect 1 >/dev/null 2>&1 || true' \
+            '${SUDO} nginx -t' \
+            '${SUDO} systemctl enable nginx >/dev/null 2>&1 || true' \
+            '${SUDO} systemctl restart nginx' \
+            '' \
+            'ssl_needed=false' \
+            'if [[ -n "${APPLICATION_DOMAIN}" ]] && ! grep -q "ssl_certificate" "${NGINX_CONF}" 2>/dev/null; then' \
+            '    ssl_needed=true' \
+            'fi' \
+            '' \
+            'if [[ "${ssl_needed}" == "true" ]]; then' \
+            '    ${SUDO} dnf -y install certbot python3-certbot-nginx' \
+            '    ${SUDO} certbot --nginx -d "${APPLICATION_DOMAIN}" --non-interactive --agree-tos --redirect --register-unsafely-without-email' \
+            '    ${SUDO} systemctl enable certbot.timer >/dev/null 2>&1 || true' \
+            '    ${SUDO} certbot renew --dry-run' \
+            'fi')
+
+          ssh -p "$server_port" "$SERVER_USERNAME@$SERVER_ADDRESS" "${remote_env}bash -lc $(printf '%q' "$remote_script")"

@@ -1,44 +1,52 @@
 import { useEffect, useState } from 'react'
-import { Button, Card, Col, Form, Row } from 'react-bootstrap'
 import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { api } from '../services/apiClient'
 
 /**
- * Completes password reset for a given recovery code.
+ * Completes the password-reset flow for a recovery code delivered via email.
+ *
+ * The route is `/reset-password/:code`.  The form is disabled if the code
+ * parameter is missing or if the server reports that account operations are
+ * not permitted.
  */
 export default function ResetPasswordPage() {
   const navigate = useNavigate()
-  const { code } = useParams()
+  const { code: recoveryCode } = useParams()
 
   const [email, setEmail] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [allowAllOperations, setAllowAllOperations] = useState(false)
+  const [areOperationsAllowed, setAreOperationsAllowed] = useState(false)
 
+  // Check whether account operations are enabled, and warn immediately
+  // if the URL is missing the recovery code.
   useEffect(() => {
-    async function loadStatus() {
+    async function loadOperationsStatus() {
       try {
-        const response = await api.get('v1/account/operations', {
+        const isEnabled = await api.get('v1/account/operations', {
           redirectOnUnauthorized: false,
           showToast: false,
         })
 
-        setAllowAllOperations(Boolean(response))
+        // Cast to boolean  -  the endpoint can return null/undefined on error.
+        setAreOperationsAllowed(Boolean(isEnabled))
       } catch {
-        setAllowAllOperations(false)
+        setAreOperationsAllowed(false)
       }
     }
 
-    loadStatus()
+    loadOperationsStatus()
 
-    if (!code) {
+    // Warn immediately if the URL is missing the recovery code.
+    if (!recoveryCode) {
       toast.error('Invalid recovery code.')
     }
-  }, [code])
+  }, [recoveryCode])
 
-  async function handleSubmit(event) {
-    event.preventDefault()
+  /** Submits the new password using the recovery code from the URL. */
+  async function handleSubmit(submitEvent) {
+    submitEvent.preventDefault()
 
     if (newPassword !== confirmPassword) {
       toast.error("Passwords don't match.")
@@ -49,7 +57,7 @@ export default function ResetPasswordPage() {
       'resetpassword',
       {
         email,
-        resetCode: code,
+        resetCode: recoveryCode,
         newPassword,
       },
       {
@@ -65,52 +73,58 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <fieldset disabled={!allowAllOperations}>
-      <Row className="mt-4">
-        <Col lg={4} md={6} className="mx-auto">
-          <Card className="feature-card">
-            <Card.Header>
+    <fieldset disabled={!areOperationsAllowed}>
+      <div className="row mt-4">
+        <div className="col-md-6 col-lg-4 mx-auto">
+          <div className="card feature-card">
+            <div className="card-header">
               <h2 className="h4 mb-0">Reset Password</h2>
-            </Card.Header>
+            </div>
 
-            <Card.Body>
+            <div className="card-body">
               <p>Re-enter your account email and the new password.</p>
 
-              <Form onSubmit={handleSubmit}>
-                <Form.Group className="mb-3" controlId="resetPasswordEmail">
-                  <Form.Control
+              <form onSubmit={handleSubmit}>
+                <div className="mb-3">
+                  <input
+                    id="resetPasswordEmail"
+                    className="form-control"
                     type="email"
                     value={email}
-                    onChange={(event) => setEmail(event.target.value)}
+                    onChange={(changeEvent) => setEmail(changeEvent.target.value)}
                   />
-                </Form.Group>
+                </div>
 
-                <Form.Group className="mb-3" controlId="resetPasswordNewPassword">
-                  <Form.Control
+                <div className="mb-3">
+                  <input
+                    id="resetPasswordNewPassword"
+                    className="form-control"
                     type="password"
                     placeholder="New Password"
                     value={newPassword}
-                    onChange={(event) => setNewPassword(event.target.value)}
+                    onChange={(changeEvent) => setNewPassword(changeEvent.target.value)}
                   />
-                </Form.Group>
+                </div>
 
-                <Form.Group className="mb-3" controlId="resetPasswordConfirmPassword">
-                  <Form.Control
+                <div className="mb-3">
+                  <input
+                    id="resetPasswordConfirmPassword"
+                    className="form-control"
                     type="password"
                     placeholder="Confirm Password"
                     value={confirmPassword}
-                    onChange={(event) => setConfirmPassword(event.target.value)}
+                    onChange={(changeEvent) => setConfirmPassword(changeEvent.target.value)}
                   />
-                </Form.Group>
+                </div>
 
                 <div className="text-end">
-                  <Button type="submit">Submit</Button>
+                  <button type="submit" className="btn btn-primary">Submit</button>
                 </div>
-              </Form>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
     </fieldset>
   )
 }

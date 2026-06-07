@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Button, Form, Table } from 'react-bootstrap'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../services/apiClient'
 import {
@@ -92,16 +91,17 @@ export default function CustomerSearchPage({ embedded = false }) {
     <div className={embedded ? 'pt-2' : 'pt-3'}>
       <div className="d-flex flex-wrap justify-content-between gap-3 align-items-center mb-3">
         <div />
-        <Button variant="success" onClick={() => navigate('/customer')}>
+        <button type="button" className="btn btn-success" onClick={() => navigate('/customer')}>
           <i className="bi bi-plus-lg me-2" />
           Add Customer
-        </Button>
+        </button>
       </div>
 
       <div className="d-flex flex-wrap justify-content-end gap-2 align-items-center mb-2">
-        <Form onSubmit={handleSubmit} autoComplete="off" style={{ maxWidth: '28rem', width: '100%' }}>
+        <form onSubmit={handleSubmit} autoComplete="off" style={{ maxWidth: '28rem', width: '100%' }}>
           <div className="input-group search-input-group">
-            <Form.Control
+            <input
+              className="form-control"
               type="text"
               value={search.filterText}
               onChange={(event) =>
@@ -111,19 +111,19 @@ export default function CustomerSearchPage({ embedded = false }) {
                 }))
               }
             />
-            <Button type="submit" variant="outline-secondary">
+            <button type="submit" className="btn btn-outline-secondary">
               <i className="bi bi-search me-2" />
               Search
-            </Button>
+            </button>
             <span className="input-group-text page-size-label">
               <span>Page</span>
               <span>Size</span>
             </span>
-            <Form.Select
+            <select
               value={search.pageSize}
               onChange={handlePageSizeChange}
               aria-label="Select page size"
-              className="flex-grow-0"
+              className="form-select flex-grow-0"
               style={{ width: '4.5rem' }}
             >
               {pageSizeOptions.map((sizeOption) => (
@@ -131,9 +131,9 @@ export default function CustomerSearchPage({ embedded = false }) {
                   {sizeOption}
                 </option>
               ))}
-            </Form.Select>
+            </select>
           </div>
-        </Form>
+        </form>
       </div>
 
       <div className="text-end mb-3">
@@ -156,7 +156,7 @@ export default function CustomerSearchPage({ embedded = false }) {
       </div>
 
       <div className="table-responsive">
-        <Table hover size="sm" className="align-middle">
+        <table className="table table-hover table-sm align-middle">
           <thead>
             <tr>
               <SortableHeader
@@ -218,7 +218,7 @@ export default function CustomerSearchPage({ embedded = false }) {
               </tr>
             ))}
           </tbody>
-        </Table>
+        </table>
       </div>
 
       <div className="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-3">

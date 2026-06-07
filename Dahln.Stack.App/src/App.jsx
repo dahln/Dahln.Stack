@@ -2,91 +2,96 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import AppLayout from './components/AppLayout'
 import ProtectedRoute from './components/ProtectedRoute'
 import { AuthProvider } from './context/AuthContext'
-import { ThemeProvider } from './context/ThemeContext'
+
+// --- Page Imports -------------------------------------------------------------
 import AccountPage from './pages/AccountPage'
 import AdminPage from './pages/AdminPage'
 import ConfirmEmailPage from './pages/ConfirmEmailPage'
 import ConfirmEmailResendPage from './pages/ConfirmEmailResendPage'
-import CustomerPage from './pages/CustomerPage'
-import CustomerSearchPage from './pages/CustomerSearchPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import LogoutPage from './pages/LogoutPage'
 import RegisterPage from './pages/RegisterPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
+import CustomerPage from './pages/CustomerPage'
+import CustomerSearchPage from './pages/CustomerSearchPage'
+
+function ProtectedPage({ children }) {
+  return <ProtectedRoute>{children}</ProtectedRoute>
+}
+
+function AdminPageRoute({ children }) {
+  return <ProtectedRoute requireAdmin>{children}</ProtectedRoute>
+}
 
 /**
- * Root route map for the application.
+ * Root of the React component tree.
+ *
+ * Sets up the global providers (in order, outermost to innermost):
+ *  1. BrowserRouter   -  client-side routing via the History API.
+ *  2. AuthProvider    -  authentication state and account operations.
+ *
+ * All page routes are declared here in one place so the full site structure
+ * is visible at a glance.
  */
 function App() {
   return (
     <BrowserRouter>
-      <ThemeProvider>
-        <AuthProvider>
-          <AppLayout>
-            <Routes>
-              <Route path="/" element={<HomePage />} />
+      <AuthProvider>
+        {/* AppLayout renders the persistent top navbar and loading overlay,
+            then slots the matched page component into its content area. */}
+        <AppLayout>
+          <Routes>
+            {/* -- Home ------------------------------------------------------ */}
+            {/* HomePage decides whether to show the document editor or the
+                login form based on the user's authentication status. */}
+            <Route path="/" element={<HomePage />} />
 
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route path="/logout" element={<LogoutPage />} />
+            {/* -- Authentication -------------------------------------------- */}
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/logout" element={<LogoutPage />} />
 
-              <Route path="/confirmingEmail" element={<ConfirmEmailPage />} />
-              <Route path="/confirmEmailResend" element={<ConfirmEmailResendPage />} />
-              <Route path="/password/forgot" element={<ForgotPasswordPage />} />
-              <Route path="/password/reset/:code" element={<ResetPasswordPage />} />
+            {/* -- Account / Email / Password -------------------------------- */}
+            <Route path="/confirmingEmail" element={<ConfirmEmailPage />} />
+            <Route path="/confirmEmailResend" element={<ConfirmEmailResendPage />} />
+            <Route path="/password/forgot" element={<ForgotPasswordPage />} />
+            {/* :code is the reset token embedded in the password-reset email link. */}
+            <Route path="/password/reset/:code" element={<ResetPasswordPage />} />
 
-              <Route
-                path="/customers"
-                element={
-                  <ProtectedRoute>
-                    <CustomerSearchPage />
-                  </ProtectedRoute>
-                }
-              />
+            {/* -- User Account Settings (protected) ------------------------- */}
+            <Route
+              path="/account"
+              element={<ProtectedPage><AccountPage /></ProtectedPage>}
+            />
 
-              <Route
-                path="/customer"
-                element={
-                  <ProtectedRoute>
-                    <CustomerPage />
-                  </ProtectedRoute>
-                }
-              />
+            {/* -- Admin Panel (protected  -  Administrator role required) ------- */}
+            <Route
+              path="/admin"
+              element={<AdminPageRoute><AdminPage /></AdminPageRoute>}
+            />
 
-              <Route
-                path="/customer/:id"
-                element={
-                  <ProtectedRoute>
-                    <CustomerPage />
-                  </ProtectedRoute>
-                }
-              />
+            <Route
+              path="/customers"
+              element={<ProtectedPage><CustomerSearchPage /></ProtectedPage>}
+            />
 
-              <Route
-                path="/account"
-                element={
-                  <ProtectedRoute>
-                    <AccountPage />
-                  </ProtectedRoute>
-                }
-              />
+            <Route
+              path="/customer"
+              element={<ProtectedPage><CustomerPage /></ProtectedPage>}
+            />
 
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute requireAdmin>
-                    <AdminPage />
-                  </ProtectedRoute>
-                }
-              />
+            <Route
+              path="/customer/:id"
+              element={<ProtectedPage><CustomerPage /></ProtectedPage>}
+            />
 
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </AppLayout>
-        </AuthProvider>
-      </ThemeProvider>
+            {/* -- Catch-all: redirect any unmatched path back to home --------- */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </AppLayout>
+      </AuthProvider>
     </BrowserRouter>
   )
 }

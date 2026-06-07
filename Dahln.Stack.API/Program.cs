@@ -1,39 +1,39 @@
 using System.Security.Claims;
 using Dahln.Stack.API.Utility;
 using Dahln.Stack.Database;
-using Dahln.Stack.Service;
+using Dahln.Stack.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Register framework services and application dependencies.
 
-//Add this so we can access HTTPContext data in other services.
+// Allow services outside the controller layer to inspect the current request/user.
 builder.Services.AddHttpContextAccessor();
 
-//Add the Database context.
+// Persist identity data and relational settings in SQLite.
 builder.Services.AddDbContext<ApplicationDbContext>(
     options => options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-//Authorization is handles by Identity
+// Identity handles authentication; this adds role-based authorization policies on top.
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("RequireAdministratorRole", policy => policy.RequireRole("Administrator"));
 });
 
-//Identiy API needs to be accessible
+// Expose the built-in identity endpoints backed by Entity Framework stores.
 builder.Services.AddIdentityApiEndpoints<IdentityUser>()
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
+// Password reset and email confirmation tokens stay valid for one day.
 builder.Services.Configure<DataProtectionTokenProviderOptions>(options => options.TokenLifespan = TimeSpan.FromDays(1));
 
-//Identity options. Uncomment this to required email confirmation before allowing sign in.
-//Other options are available.
+// Configure the default account lockout behaviour.
 builder.Services.Configure<IdentityOptions>(options =>
 {
     options.Lockout.AllowedForNewUsers = true;
@@ -43,10 +43,10 @@ builder.Services.Configure<IdentityOptions>(options =>
 });
 
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
-//Adding necessary services.
+// Register application services.
 builder.Services.AddTransient<UserManager<IdentityUser>>();
 builder.Services.AddTransient<RoleManager<IdentityRole>>();
 builder.Services.AddTransient<SignInManager<IdentityUser>>();
@@ -57,8 +57,7 @@ builder.Services.AddScoped<CustomerService>();
 
 var app = builder.Build();
 
-//Check for and automatically apply pending migrations
-//You can run DB migrations manually, or allow the system to run DB migrations on startup.
+// Bring the database and role/bootstrap data into a usable state before serving requests.
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -67,20 +66,23 @@ using (var scope = app.Services.CreateScope())
     var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
     if (db != null)
     {
+        // Auto-apply pending EF Core migrations in development-style deployments.
         var migrations = db.Database.GetPendingMigrations();
         if (migrations.Any())
+        {
             db.Database.Migrate();
+        }
     }
 
     var roleSystemAdministratorExists = await roleManager.RoleExistsAsync("Administrator");
     if (!roleSystemAdministratorExists)
     {
-        // Create the "Subscribed" role if it doesn't exist
+        // Create the "Administrator" role if it doesn't exist
         await roleManager.CreateAsync(new IdentityRole("Administrator"));
     }
 
     var systemSettings = db.SystemSettings.Any();
-    if(systemSettings == false)
+    if (systemSettings == false)
     {
         var newSystemSettings = new SystemSetting();
         db.SystemSettings.Add(newSystemSettings);
@@ -90,28 +92,24 @@ using (var scope = app.Services.CreateScope())
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
 
 app.UseRouting();
 
-//Authorization was added, now the app needs to use it.
+// Authorization must be in the middleware pipeline for controller attributes to work.
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapGet("/api/v1/metadata", () => TypedResults.Ok(new { title = "Dahln.Stack" }));
 
-//Expose identity API endpoints. Identity API doesn't include a logout method. One was created in the account controller, along with other account related endpoints.
+// Keep the built-in identity endpoints available, but redirect the legacy registration path
+// to the application-specific account controller that adds extra registration rules.
 app.MapGroup("/api").MapIdentityApi<IdentityUser>().WithTags("Identity");
-app.MapPost("/api/register", () => "Deprecated. Use /api/v1/account/register."); //This will disable the built in 'Identity /register' method.
-
-// Map Scalar API reference after all endpoints are mapped so it can discover controller endpoints as well
-if (app.Environment.IsDevelopment())
-{
-    app.MapScalarApiReference();
-}
+app.MapPost("/api/register", () => "Deprecated. Use /api/v1/account/register.").ExcludeFromDescription();
+app.MapPost("/register", () => Results.Redirect("/api/v1/account/register", permanent: true)).ExcludeFromDescription();
 
 app.Run();
 

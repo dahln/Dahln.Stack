@@ -1,0 +1,17 @@
+Dahln.Stack.API/bin
+Dahln.Stack.API/obj
+Dahln.Stack.API/artifacts
+Dahln.Stack.App/dist
+Dahln.Stack.Database/bin
+Dahln.Stack.Database/obj
+Dahln.Stack.Database/artifacts
+Dahln.Stack.Dto/bin
+Dahln.Stack.Dto/obj
+Dahln.Stack.Dto/artifacts
+Dahln.Stack.Service/bin
+Dahln.Stack.Service/obj
+Dahln.Stack.Service/artifacts
+Dahln.Stack.Test/bin
+Dahln.Stack.Test/obj
+Dahln.Stack.Test/TestResults
+package-lock.json

@@ -1,34 +1,42 @@
 import { useEffect, useState } from 'react'
-import { Button, Card, Col, Form, Row } from 'react-bootstrap'
 import { toast } from 'react-toastify'
 import { api } from '../services/apiClient'
 
 /**
- * Starts the password reset flow.
+ * Starts the password-reset flow by submitting the user's email address.
+ *
+ * The backend sends a recovery link to the provided email.  The form is
+ * disabled once the request is submitted (to prevent duplicate sends) and
+ * also when the server reports that account operations are not permitted.
  */
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
-  const [isDisabled, setIsDisabled] = useState(false)
+  const [isFormDisabled, setIsFormDisabled] = useState(false)
 
+  // Check whether account operations are enabled on this server before
+  // allowing the user to submit.
   useEffect(() => {
-    async function loadStatus() {
+    async function loadOperationsStatus() {
       try {
-        const response = await api.get('v1/account/operations', {
+        const isEnabled = await api.get('v1/account/operations', {
           redirectOnUnauthorized: false,
           showToast: false,
         })
 
-        setIsDisabled(response === false)
+        // The endpoint returns `false` when account operations are disabled.
+        setIsFormDisabled(isEnabled === false)
       } catch {
-        setIsDisabled(true)
+        // If the status check fails, default to disabled to prevent submission errors.
+        setIsFormDisabled(true)
       }
     }
 
-    loadStatus()
+    loadOperationsStatus()
   }, [])
 
-  async function handleSubmit(event) {
-    event.preventDefault()
+  /** Submits the password-reset request and locks the form on success. */
+  async function handleSubmit(submitEvent) {
+    submitEvent.preventDefault()
 
     const response = await api.post(
       'forgotpassword',
@@ -41,38 +49,41 @@ export default function ForgotPasswordPage() {
 
     if (response) {
       toast.success('Done. Check your email for recovery instructions.')
-      setIsDisabled(true)
+      // Lock the form after a successful send to prevent duplicate submissions.
+      setIsFormDisabled(true)
     }
   }
 
   return (
-    <fieldset disabled={isDisabled}>
-      <Row className="mt-4">
-        <Col lg={4} md={6} className="mx-auto">
-          <Card className="feature-card">
-            <Card.Header>
+    <fieldset disabled={isFormDisabled}>
+      <div className="row mt-4">
+        <div className="col-md-6 col-lg-4 mx-auto">
+          <div className="card feature-card">
+            <div className="card-header">
               <h2 className="h4 mb-0">Forgot Password</h2>
-            </Card.Header>
+            </div>
 
-            <Card.Body>
-              <Form onSubmit={handleSubmit}>
-                <Form.Group className="mb-3" controlId="forgotPasswordEmail">
-                  <Form.Label>Email</Form.Label>
-                  <Form.Control
+            <div className="card-body">
+              <form onSubmit={handleSubmit}>
+                <div className="mb-3">
+                  <label className="form-label" htmlFor="forgotPasswordEmail">Email</label>
+                  <input
+                    id="forgotPasswordEmail"
+                    className="form-control"
                     type="email"
                     value={email}
-                    onChange={(event) => setEmail(event.target.value)}
+                    onChange={(changeEvent) => setEmail(changeEvent.target.value)}
                   />
-                </Form.Group>
+                </div>
 
                 <div className="text-end">
-                  <Button type="submit">Submit</Button>
+                  <button type="submit" className="btn btn-primary">Submit</button>
                 </div>
-              </Form>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
     </fieldset>
   )
 }

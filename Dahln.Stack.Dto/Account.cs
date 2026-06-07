@@ -35,7 +35,7 @@ namespace Dahln.Stack.Dto
         public int Status { get; set; }
     }
 
-    public class User 
+    public class User
     {
         public string Id { get; set; }
         public string Email { get; set; }

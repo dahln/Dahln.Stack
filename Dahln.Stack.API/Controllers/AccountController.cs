@@ -8,21 +8,30 @@ using Dahln.Stack.Dto;
 using Dahln.Stack.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.Data;
-using System.Drawing;
-using Dahln.Stack.Service;
+using Dahln.Stack.Services;
 using System.ComponentModel;
 
 namespace Dahln.Stack.API.Controllers;
 
 [ApiController]
+/// <summary>
+/// Hosts account, administration, and system-settings endpoints that sit beside the built-in
+/// ASP.NET Core Identity API. These actions cover the application-specific rules that the
+/// generated identity endpoints do not enforce, such as registration gating and admin workflows.
+/// </summary>
 public class AccountController : Controller
 {
-    private AccountService _accountService;
+    private readonly AccountService _accountService;
+
     public AccountController(AccountService accountService)
     {
         _accountService = accountService;
     }
 
+    /// <summary>
+    /// Registers a new account after the service layer applies registration enablement,
+    /// domain restrictions, and first-user administrator bootstrap rules.
+    /// </summary>
     [HttpPost]
     [Route("api/v1/account/register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest model)
@@ -35,17 +44,24 @@ public class AccountController : Controller
 
         var response = await _accountService.Register(model.Email, model.Password);
 
-        if(response.Count == 0)
+        if (response.Count == 0)
+        {
             return Ok();
+        }
         else
+        {
             return BadRequest(response.FirstOrDefault());
+        }
     }
 
     [Authorize]
     [HttpGet]
     [Route("api/v1/account/logout")]
     [Description("Logs out the current user by invalidating their authentication session.")]
-    async public Task<IActionResult> AccountLogout()
+    /// <summary>
+    /// Logs out the currently authenticated user.
+    /// </summary>
+    public async Task<IActionResult> AccountLogout()
     {
         await _accountService.AccountLogout();
         return Ok();
@@ -55,21 +71,22 @@ public class AccountController : Controller
     /// Call this BEFORE allowing the change of email.
     /// WHY? Because the identity API doesn't check if an email is unique when updating user email with POST:manage/info.
     /// </summary>
-    /// <param name="model"></param>
-    /// <returns></returns>
     [Authorize]
     [HttpPost]
     [Route("api/v1/account/exists")]
-    async public Task<IActionResult> AccountExistsByEmail([FromBody]AccountEmail model)
+    public async Task<IActionResult> AccountExistsByEmail([FromBody] AccountEmail model)
     {
         var userExists = await _accountService.AccountExistsByEmail(model.Email);
         return Ok(userExists);
     }
 
+    /// <summary>
+    /// Deletes the current user account and any user-owned data cascaded by the service layer.
+    /// </summary>
     [Authorize]
     [HttpDelete]
     [Route("api/v1/account")]
-    async public Task<IActionResult> DeleteAccount()
+    public async Task<IActionResult> DeleteAccount()
     {
         string userId = User.GetUserId();
 
@@ -83,8 +100,6 @@ public class AccountController : Controller
     /// For example, if the Server does not have a SendGrid API key then Password Recovery and Changing Email is 
     /// not allowed because the recovery and confirmation emails will never be sent.
     /// </summary>
-    /// <param name="model"></param>
-    /// <returns></returns>
     [HttpGet]
     [Route("api/v1/account/operations")]
     public async Task<IActionResult> AccountAllowAllOperations()
@@ -102,19 +117,24 @@ public class AccountController : Controller
         return Ok(allow);
     }
 
+    /// <summary>
+    /// Returns the current user's role names so the frontend can tailor navigation and features.
+    /// </summary>
     [Authorize]
     [HttpGet]
     [Route("api/v1/account/roles")]
-    async public Task<IActionResult> GeCurrentUserRoles()
+    public async Task<IActionResult> GeCurrentUserRoles()
     {
         string userId = User.GetUserId();
-        
+
         var userRoles = await _accountService.GeCurrentUserRoles(userId);
 
         return Ok(userRoles);
     }
 
-
+    /// <summary>
+    /// Returns whether two-factor authentication is enabled for the current user.
+    /// </summary>
     [HttpGet]
     [Route("api/v1/account/2fa")]
     public async Task<IActionResult> AccountTwoFactorEnabled()
@@ -122,43 +142,56 @@ public class AccountController : Controller
         string userId = User.GetUserId();
 
         var isTwoFactorEnabled = await _accountService.AccountTwoFactorEnabled(userId);
-        
+
         return Ok(isTwoFactorEnabled);
     }
 
+    /// <summary>
+    /// Grants or removes the Administrator role for another user account.
+    /// </summary>
     [Authorize(Roles = "Administrator")]
     [HttpGet]
     [Route("api/v1/user/{userId}/role/administrator")]
-    async public Task<IActionResult> ToggleUserAdministratorRole(string userId)
+    public async Task<IActionResult> ToggleUserAdministratorRole(string userId)
     {
         string currentUserId = User.GetUserId();
 
-        if(currentUserId == userId)
+        if (currentUserId == userId)
+        {
             return BadRequest("You cannot toggle your own administrative role");
+        }
 
         await _accountService.ToggleUserAdministratorRole(userId);
 
         return Ok();
     }
 
+    /// <summary>
+    /// Allows an administrator to delete another user account while preventing self-deletion.
+    /// </summary>
     [Authorize(Roles = "Administrator")]
     [HttpDelete]
     [Route("api/v1/user/{userId}")]
-    async public Task<IActionResult> DeleteUserAsAdministrator(string userId)
+    public async Task<IActionResult> DeleteUserAsAdministrator(string userId)
     {
         string currentUserId = User.GetUserId();
-        if(currentUserId == userId)
+        if (currentUserId == userId)
+        {
             return BadRequest("Cannot delete this account.");
+        }
 
         await _accountService.DeleteAccount(userId);
 
         return Ok();
     }
 
+    /// <summary>
+    /// Searches users for the admin screen and annotates each result with role and self metadata.
+    /// </summary>
     [Authorize(Roles = "Administrator")]
     [HttpPost]
     [Route("api/v1/users")]
-    async public Task<IActionResult> UserSearch([FromBody] Dto.Search model)
+    public async Task<IActionResult> UserSearch([FromBody] Dto.Search model)
     {
         string userId = User.GetUserId();
 
@@ -167,26 +200,32 @@ public class AccountController : Controller
         return Ok(response);
     }
 
+    /// <summary>
+    /// Updates the singleton system-settings record used by the admin experience.
+    /// </summary>
     [Authorize(Roles = "Administrator")]
     [HttpPut]
     [Route("api/v1/settings")]
-    async public Task<IActionResult> UpdateSystemSettings([FromBody] Dto.SystemSettings model)
+    public async Task<IActionResult> UpdateSystemSettings([FromBody] Dto.SystemSettings model)
     {
         await _accountService.UpdateSystemSettings(model);
 
         return Ok();
     }
 
+    /// <summary>
+    /// Returns the current system-settings snapshot for the admin screen.
+    /// </summary>
     [Authorize(Roles = "Administrator")]
     [HttpGet]
     [Route("api/v1/settings")]
-    async public Task<IActionResult> GetSystemSettings()
+    public async Task<IActionResult> GetSystemSettings()
     {
         var response = await _accountService.GetSystemSettings();
 
         return Ok(response);
     }
-    
+
 }
 
 

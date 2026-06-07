@@ -1,5 +1,5 @@
 using Dahln.Stack.Database;
-using Dahln.Stack.Service;
+using Dahln.Stack.Services;
 using Dahln.Stack.Dto;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.InMemory;
@@ -56,17 +56,17 @@ public class CustomerServiceTests
         var service = GetCustomerService(db);
         var userId = "user1";
         var customer = new Dahln.Stack.Dto.Customer { Name = "Old Name", Email = "old@example.com" };
-       
-       //Test Create
+
+        //Test Create
         var customerId = await service.CreateCustomerAsync(customer, userId);
         var added = await service.GetCustomerAsync(customerId, userId);
         Assert.IsNotNull(added);
-        
+
         //Update Customer
         added.Name = "New Name";
         var updatedResult = await service.UpdateCustomer(added, userId);
         Assert.IsTrue(updatedResult);
-        
+
         //Get Customer and validate update
         var updated = await service.GetCustomerAsync(customerId, userId);
         Assert.IsNotNull(updated);
@@ -80,9 +80,9 @@ public class CustomerServiceTests
         var db = GetInMemoryDbContext();
         var service = GetCustomerService(db);
         var userId = "user1";
-        
+
         var customer = new Dahln.Stack.Dto.Customer { Name = "To Delete", Email = "delete@example.com" };
-        
+
         //Test Create and Delete new customer
         var customerId = await service.CreateCustomerAsync(customer, userId);
         var deleted = await service.DeleteCustomerByIdAsync(customerId, userId);

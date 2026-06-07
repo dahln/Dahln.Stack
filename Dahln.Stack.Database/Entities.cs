@@ -29,7 +29,7 @@ namespace Dahln.Stack.Database
         public string OwnerId { get; set; }
     }
 
-    
+
 
     public class SystemSetting
     {

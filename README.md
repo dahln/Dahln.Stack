@@ -1,12 +1,12 @@
 [![Build and Release Packages](https://github.com/dahln/Dahln.Stack/actions/workflows/BuildReleasePackages.yml/badge.svg)](https://github.com/dahln/Dahln.Stack/actions/workflows/BuildReleasePackages.yml)
-[![Deploy](https://github.com/dahln/Dahln.Stack/actions/workflows/deploy.yml/badge.svg)](https://github.com/dahln/Dahln.Stack/actions/workflows/deploy.yml)
+[![Deploy](https://github.com/dahln/Dahln.Stack/actions/workflows/Deployment.yml/badge.svg)](https://github.com/dahln/Dahln.Stack/actions/workflows/Deployment.yml)
 [![PR Validation](https://github.com/dahln/Dahln.Stack/actions/workflows/pr-validation.yml/badge.svg)](https://github.com/dahln/Dahln.Stack/actions/workflows/pr-validation.yml)
 [![Latest Release](https://img.shields.io/github/v/release/dahln/Dahln.Stack?label=Latest%20Release)](https://github.com/dahln/Dahln.Stack/releases/latest)
 
 
 
 - [ ] DEMO: Coming soon
-- [x] Testing new install.sh script - used for either manual or automatted deployments
+- [x] Release-driven Fedora deployment workflow
 - [x] Add badges
 
 ## Overview
@@ -110,7 +110,50 @@ git update-index --no-assume-unchanged .\Dahln.Stack.API\appsettings.json
 
 ## Deployment
 
-Review DEPLOYMENT.md for instructions on how to deploy the application
+Deployment runs through the `Deployment.yml` GitHub Actions workflow when a new GitHub Release is published. The workflow targets Fedora x64, downloads the release assets on the GitHub runner with the built-in `GITHUB_TOKEN`, uploads the packages to the server over SSH, and configures the server in place. No GitHub login or token is left on the server.
+
+Before the first deployment:
+
+1. Create the Fedora server.
+2. Point your DNS record at the server IP and allow it to propagate.
+3. Configure these repository secrets:
+
+- `SERVERADDRESS`
+- `SERVERPORT`
+- `SERVERUSERNAME`
+- `SERVERKEY`
+- `APPLICATIONDOMAIN`
+- `APPLICATIONNAME`
+- `APPLICATIONUSER`
+- `APPLICATIONAPIPORT`
+
+The workflow derives the rest from `APPLICATIONNAME` and the standard deployment layout:
+
+- Deploy root: `/var/www/${APPLICATIONNAME,,}`
+- API deploy path: `/var/www/${APPLICATIONNAME,,}/api`
+- App deploy path: `/var/www/${APPLICATIONNAME,,}/app`
+- systemd service: `kestrel-${APPLICATIONNAME,,}`
+- Nginx site name: `${APPLICATIONNAME,,}`
+- API executable: `${APPLICATIONNAME}.API`
+- API release asset: `${APPLICATIONNAME}.API-{tag}-linux-x64.zip`
+- App release asset: `${APPLICATIONNAME}.App-{tag}.zip`
+- API route prefix: `/api`
+
+The deployment workflow then:
+
+- updates Fedora packages with `dnf`
+- installs the required dependencies from the former Fedora installer
+- configures `firewalld`
+- creates the application system user when missing
+- deploys the API and app packages with `rsync`
+- creates or updates the systemd service
+- creates or updates the Nginx site configuration
+- enables SELinux proxy access for Nginx
+- provisions a Let's Encrypt certificate the first time `APPLICATIONDOMAIN` is set and SSL is not already configured
+
+Subsequent releases update the deployed files and restart the service stack. Certificate setup is skipped after SSL is already configured.
+
+The SSH user must be `root` or have passwordless `sudo`, because the workflow installs packages and writes system files non-interactively.
 
 ## License
 This project uses the Unlicense. See `LICENSE` for the full text.
@@ -118,7 +161,5 @@ This project uses the Unlicense. See `LICENSE` for the full text.
 ## Resources
 - [Identity API with WebAPI](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity-api-authorization?view=aspnetcore-8.0)
 - [EF Core CLI](https://learn.microsoft.com/en-us/ef/core/cli/dotnet)
-
-
 
 

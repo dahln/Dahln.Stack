@@ -19,7 +19,7 @@ namespace Dahln.Stack.Dto
     {
         public static string GetDescription(this Enum GenericEnum)
         {
-            if(GenericEnum == null)
+            if (GenericEnum == null)
             {
                 return string.Empty;
             }

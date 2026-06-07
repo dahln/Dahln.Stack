@@ -9,7 +9,7 @@ namespace Dahln.Stack.Database
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
         public DbSet<Customer> Customers { get; set; }
-        public DbSet<SystemSetting> SystemSettings { get ;set; }
+        public DbSet<SystemSetting> SystemSettings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

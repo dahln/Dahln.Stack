@@ -3,8 +3,13 @@ using Dahln.Stack.Dto;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace Dahln.Stack.Service;
+namespace Dahln.Stack.Services;
 
+/// <summary>
+/// Centralizes account lifecycle, admin workflows, and system-settings coordination.
+/// The service sits between controllers and ASP.NET Core Identity so the web layer stays thin
+/// while application-specific rules remain in one place.
+/// </summary>
 public class AccountService
 {
     private ApplicationDbContext _db { get; }
@@ -18,13 +23,18 @@ public class AccountService
         _signInManager = signInManager;
     }
 
+    /// <summary>
+    /// Returns the total number of registered users.
+    /// </summary>
     public async Task<int> UserCount()
     {
-        var users = await _db.Users.ToListAsync();
-
         return await _db.Users.CountAsync();
     }
 
+    /// <summary>
+    /// Loads the singleton system-settings record, creating a default row on first use.
+    /// Sensitive values are masked before they are returned to the caller.
+    /// </summary>
     public async Task<Dto.SystemSettings> GetSystemSettings()
     {
         var settings = await _db.SystemSettings.FirstOrDefaultAsync();
@@ -35,7 +45,7 @@ public class AccountService
                 EmailApiKey = null,
                 SystemEmailAddress = null,
                 RegistrationEnabled = true,
-                EmailDomainRestriction = null
+                EmailDomainRestriction = null,
             };
             _db.SystemSettings.Add(settings);
             await _db.SaveChangesAsync();
@@ -52,6 +62,10 @@ public class AccountService
         return response;
     }
 
+    /// <summary>
+    /// Persists admin-managed system settings and clears Mongo verification whenever the
+    /// connection string changes.
+    /// </summary>
     public async Task UpdateSystemSettings(Dto.SystemSettings model)
     {
         var settings = await _db.SystemSettings.FirstOrDefaultAsync();
@@ -62,20 +76,31 @@ public class AccountService
                 EmailApiKey = model.EmailApiKey,
                 SystemEmailAddress = model.SystemEmailAddress,
                 RegistrationEnabled = model.RegistrationEnabled,
-                EmailDomainRestriction = model.EmailDomainRestriction
+                EmailDomainRestriction = model.EmailDomainRestriction,
             };
             _db.SystemSettings.Add(settings);
             await _db.SaveChangesAsync();
         }
-        
-        settings.EmailApiKey = model.EmailApiKey.Trim() == "--- NOT DISPLAYED FOR SECURITY ---" ? settings.EmailApiKey : model.EmailApiKey;
+
+        if (model.EmailApiKey.Trim() == "--- NOT DISPLAYED FOR SECURITY ---")
+        {
+            settings.EmailApiKey = settings.EmailApiKey;
+        }
+        else
+        {
+            settings.EmailApiKey = model.EmailApiKey;
+        }
         settings.SystemEmailAddress = model.SystemEmailAddress;
         settings.RegistrationEnabled = model.RegistrationEnabled;
         settings.EmailDomainRestriction = model.EmailDomainRestriction;
-        
+
         await _db.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Searches the identity user store for the admin screen and annotates each result with
+    /// administrator and self information.
+    /// </summary>
     public async Task<Dto.SearchResponse<Dto.User>> UserSearch(Dto.Search model, string userId)
     {
         var query = _db.Users.AsQueryable();
@@ -87,15 +112,25 @@ public class AccountService
 
         if (model.SortBy == nameof(Dto.User.Email))
         {
-            query = model.SortDirection == Dto.SortDirection.Ascending
-                        ? query.OrderBy(c => c.Email)
-                        : query.OrderByDescending(c => c.Email);
+            if (model.SortDirection == Dto.SortDirection.Ascending)
+            {
+                query = query.OrderBy(c => c.Email);
+            }
+            else
+            {
+                query = query.OrderByDescending(c => c.Email);
+            }
         }
         else
         {
-            query = model.SortDirection == Dto.SortDirection.Ascending
-                        ? query.OrderBy(c => c.Email)
-                        : query.OrderByDescending(c => c.Email);
+            if (model.SortDirection == Dto.SortDirection.Ascending)
+            {
+                query = query.OrderBy(c => c.Email);
+            }
+            else
+            {
+                query = query.OrderByDescending(c => c.Email);
+            }
         }
 
         Dto.SearchResponse<Dto.User> response = new Dto.SearchResponse<Dto.User>();
@@ -123,20 +158,30 @@ public class AccountService
         return response;
     }
 
+    /// <summary>
+    /// Returns whether new user registration is currently enabled.
+    /// </summary>
     public async Task<bool> AccountAllowRegistrationOperations()
     {
         var settings = await _db.SystemSettings.FirstOrDefaultAsync();
         if (settings == null)
+        {
             return false;
+        }
 
         return settings.RegistrationEnabled;
     }
 
+    /// <summary>
+    /// Returns whether email-driven account operations can run with the current system settings.
+    /// </summary>
     public async Task<bool> AccountAllowAllOperations()
     {
         var settings = await _db.SystemSettings.FirstOrDefaultAsync();
         if (settings == null)
+        {
             return false;
+        }
 
         var emailApi = settings.EmailApiKey;
         var systemEmailAddress = settings.SystemEmailAddress;
@@ -144,23 +189,33 @@ public class AccountService
         var allowAllOperations = false;
 
         if (!string.IsNullOrEmpty(emailApi) && !string.IsNullOrEmpty(systemEmailAddress))
+        {
             allowAllOperations = true;
+        }
 
         return allowAllOperations;
     }
 
-    async public Task DeleteAccount(string userId)
+    /// <summary>
+    /// Deletes a user account and removes user-owned customer records first to avoid orphaned data.
+    /// </summary>
+    public async Task DeleteAccount(string userId)
     {
-        //Delete user and all their customers.
+        // Remove dependent relational data before deleting the identity record.
         var customersOwnedByThisUser = _db.Customers.Where(x => x.OwnerId == userId);
         _db.Customers.RemoveRange(customersOwnedByThisUser);
         await _db.SaveChangesAsync();
 
         var user = await _userManager.FindByIdAsync(userId);
         if (user != null)
+        {
             await _userManager.DeleteAsync(user);
+        }
     }
 
+    /// <summary>
+    /// Returns whether the specified user currently has two-factor authentication enabled.
+    /// </summary>
     public async Task<bool> AccountTwoFactorEnabled(string userId)
     {
         var user = await _userManager.FindByIdAsync(userId);
@@ -169,53 +224,73 @@ public class AccountService
         return isTwoFactorEnabled;
     }
 
-    async public Task ToggleUserAdministratorRole(string userId)
+    /// <summary>
+    /// Toggles the Administrator role on the specified user account.
+    /// </summary>
+    public async Task ToggleUserAdministratorRole(string userId)
     {
         var user = await _userManager.FindByIdAsync(userId);
-        var IsAdministrator = await _userManager.IsInRoleAsync(user, "Administrator");
-        if (IsAdministrator)
+        var isAdministrator = await _userManager.IsInRoleAsync(user, "Administrator");
+        if (isAdministrator)
+        {
             await _userManager.RemoveFromRoleAsync(user, "Administrator");
+        }
         else
+        {
             await _userManager.AddToRoleAsync(user, "Administrator");
+        }
     }
 
-    async public Task<List<string>> GeCurrentUserRoles(string userId)
+    /// <summary>
+    /// Returns all role names assigned to the specified user.
+    /// </summary>
+    public async Task<List<string>> GeCurrentUserRoles(string userId)
     {
         var user = await _userManager.FindByIdAsync(userId);
         if (user == null)
+        {
             return new List<string>();
+        }
 
         var userRoles = await _userManager.GetRolesAsync(user);
 
         return userRoles.ToList();
     }
 
-    async public Task<bool> AccountExistsByEmail(string email)
+    /// <summary>
+    /// Returns whether an account already exists for the provided email address.
+    /// </summary>
+    public async Task<bool> AccountExistsByEmail(string email)
     {
         var user = await _userManager.FindByEmailAsync(email);
         return user != null;
     }
 
-    async public Task AccountLogout()
+    /// <summary>
+    /// Ends the current sign-in session.
+    /// </summary>
+    public async Task AccountLogout()
     {
         await _signInManager.SignOutAsync();
     }
 
+    /// <summary>
+    /// Creates a new user account after enforcing registration policy, domain restrictions,
+    /// first-user administrator bootstrap, and default tag seeding when Mongo is enabled.
+    /// </summary>
     public async Task<List<string>> Register(string email, string password)
     {
         List<string> results = new List<string>();
 
-
         var settings = await GetSystemSettings();
-        //If setting is DISABLED, do not allow registration
+        // Stop immediately when registration is disabled globally.
         if (settings.RegistrationEnabled == false)
         {
             results.Add("Registration Disabled");
             return results;
         }
 
-        //If setting is enabled, limit registration by email "Domain".
-        //Example: Only allow users who's email address ends with a '@dahlnstack.com'
+        // Optionally restrict sign-up to approved email domains.
         if (string.IsNullOrEmpty(settings.EmailDomainRestriction) == false)
         {
             var validDomains = settings.EmailDomainRestriction.Split(",").ToList();
@@ -231,36 +306,34 @@ public class AccountService
             }
         }
 
-        // Create a new ApplicationUser with the provided details
+        // Create the identity record once all application-level validation has passed.
         var user = new IdentityUser
         {
             UserName = email,
             Email = email,
         };
 
-        // Attempt to create the user
         var result = await _userManager.CreateAsync(user, password);
 
-        // Check if user creation was successful
         if (result.Succeeded)
         {
-            var usersCount = await UserCount();
-            if (usersCount == 1)
+            var identity = await _userManager.FindByEmailAsync(email);
+            var userCount = await _db.Users.CountAsync();
+            if (userCount == 1 && identity != null)
             {
-                var identity = await _userManager.FindByEmailAsync(email);
+                // Bootstrap the first registered account as the initial administrator.
                 await _userManager.AddToRoleAsync(identity, "Administrator");
             }
 
-            return results; // Success
+            return results;
         }
 
-
-        // If there were errors, add them to the ModelState
         foreach (var error in result.Errors)
         {
             results.Add(error.Description);
         }
 
-        return results; // Return errors
+        return results;
     }
+
 }

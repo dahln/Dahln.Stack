@@ -1,7 +1,7 @@
 using Dahln.Stack.Database;
 using Microsoft.EntityFrameworkCore;
 
-namespace Dahln.Stack.Service;
+namespace Dahln.Stack.Services;
 
 public class CustomerService
 {
@@ -40,8 +40,10 @@ public class CustomerService
     {
         var customer = await _db.Customers.FirstOrDefaultAsync(c => c.Id == customerId && c.OwnerId == userId);
 
-        if(customer == null)
+        if (customer == null)
+        {
             return null;
+        }
 
         var response = new Dto.Customer()
         {
@@ -65,9 +67,11 @@ public class CustomerService
     public async Task<bool> UpdateCustomer(Dto.Customer model, string userId)
     {
         var customer = _db.Customers.FirstOrDefault(c => c.Id == model.Id && c.OwnerId == userId);
-        
+
         if (customer == null)
+        {
             return false;
+        }
 
         customer.Name = model.Name;
         customer.Email = model.Email;
@@ -92,7 +96,9 @@ public class CustomerService
     {
         var customer = _db.Customers.FirstOrDefault(c => c.Id == customerId && c.OwnerId == userId);
         if (customer == null)
+        {
             return false;
+        }
 
         _db.Customers.Remove(customer);
         await _db.SaveChangesAsync();
@@ -117,33 +123,58 @@ public class CustomerService
 
         if (search.SortBy == nameof(Dto.Customer.Name))
         {
-            query = search.SortDirection == Dto.SortDirection.Ascending
-                        ? query.OrderBy(c => c.Name)
-                        : query.OrderByDescending(c => c.Name);
+            if (search.SortDirection == Dto.SortDirection.Ascending)
+            {
+                query = query.OrderBy(c => c.Name);
+            }
+            else
+            {
+                query = query.OrderByDescending(c => c.Name);
+            }
         }
         else if (search.SortBy == nameof(Dto.Customer.State))
         {
-            query = search.SortDirection == Dto.SortDirection.Ascending
-                        ? query.OrderBy(c => c.State)
-                        : query.OrderByDescending(c => c.State);
+            if (search.SortDirection == Dto.SortDirection.Ascending)
+            {
+                query = query.OrderBy(c => c.State);
+            }
+            else
+            {
+                query = query.OrderByDescending(c => c.State);
+            }
         }
         else if (search.SortBy == nameof(Dto.Customer.Gender))
         {
-            query = search.SortDirection == Dto.SortDirection.Ascending
-                        ? query.OrderBy(c => c.Gender)
-                        : query.OrderByDescending(c => c.Gender);
+            if (search.SortDirection == Dto.SortDirection.Ascending)
+            {
+                query = query.OrderBy(c => c.Gender);
+            }
+            else
+            {
+                query = query.OrderByDescending(c => c.Gender);
+            }
         }
         else if (search.SortBy == nameof(Dto.Customer.Active))
         {
-            query = search.SortDirection == Dto.SortDirection.Ascending
-                        ? query.OrderBy(c => c.Active)
-                        : query.OrderByDescending(c => c.Active);
+            if (search.SortDirection == Dto.SortDirection.Ascending)
+            {
+                query = query.OrderBy(c => c.Active);
+            }
+            else
+            {
+                query = query.OrderByDescending(c => c.Active);
+            }
         }
         else
         {
-            query = search.SortDirection == Dto.SortDirection.Ascending
-                        ? query.OrderBy(c => c.Name)
-                        : query.OrderByDescending(c => c.Name);
+            if (search.SortDirection == Dto.SortDirection.Ascending)
+            {
+                query = query.OrderBy(c => c.Name);
+            }
+            else
+            {
+                query = query.OrderByDescending(c => c.Name);
+            }
         }
 
         Dto.SearchResponse<Dto.Customer> response = new Dto.SearchResponse<Dto.Customer>();

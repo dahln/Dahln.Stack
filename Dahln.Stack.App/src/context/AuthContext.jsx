@@ -1,8 +1,23 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { api, ApiError } from '../services/apiClient'
 
+// --- Context Setup ------------------------------------------------------------
+
+// The React context object that all consumers access via useAuth().
 const AuthContext = createContext(null)
 
+// --- State Helpers ------------------------------------------------------------
+
+/**
+ * Returns the baseline auth state used when no user is logged in and when the
+ * app first loads before the session check completes.
+ *
+ * Having this as a named factory (rather than a plain object literal) lets us
+ * call it both as the useState initialiser and as the value to set on logout,
+ * guaranteeing the same shape every time.
+ *
+ * @returns {{ isAuthenticated: false, isAdmin: false, roles: [], user: null }}
+ */
 function createUnauthenticatedState() {
   return {
     isAuthenticated: false,
@@ -12,21 +27,51 @@ function createUnauthenticatedState() {
   }
 }
 
+// --- Provider Component -------------------------------------------------------
+
 /**
- * Provides authentication state and account actions for the entire app.
+ * Wraps the application and provides authentication state plus account
+ * operations (login, logout, register, refreshAuth) to all descendants
+ * via the useAuth() hook.
+ *
+ * On mount it immediately checks whether a valid session cookie exists by
+ * calling the /manage/info endpoint, and transitions from the loading state
+ * to either authenticated or unauthenticated.
+ *
+ * @param {{ children: React.ReactNode }} props
  */
 export function AuthProvider({ children }) {
+  // The current auth snapshot.  Starts in the unauthenticated/unknown state.
   const [authState, setAuthState] = useState(createUnauthenticatedState)
-  const [isLoading, setIsLoading] = useState(true)
 
+  // True while the initial session check (or any explicit refreshAuth call) is
+  // in-flight.  Consumers can use this to show a loading spinner instead of
+  // the login page during the very first render.
+  const [isLoadingAuthState, setIsLoadingAuthState] = useState(true)
+
+  // --- Auth State Refresh -----------------------------------------------------
+
+  /**
+  * Fetches the latest auth information from the server (user info and roles)
+  * and updates the auth state accordingly.
+   *
+   * This is called automatically on mount and can also be called manually after
+   * any operation that changes the session (e.g. after enabling 2FA, changing
+   * email, etc.) to ensure the in-memory auth state stays in sync.
+   *
+  * Both API calls are made in parallel via Promise.all for speed.
+   *
+   * @returns {Promise<Object>} The new auth state that was stored in React state.
+   */
   const refreshAuth = useCallback(async () => {
-    setIsLoading(true)
+    setIsLoadingAuthState(true)
 
     try {
-      const [userInfo, roles] = await Promise.all([
+      // Fire all three requests simultaneously  -  they are independent of each other.
+      const [userInfo, userRoles] = await Promise.all([
         api.get('manage/info', {
-          redirectOnUnauthorized: false,
-          showToast: false,
+          redirectOnUnauthorized: false, // don't redirect to "/" on 401  -  just mark as logged out
+          showToast: false, // silent; we handle the unauthenticated case ourselves
         }),
         api.get('v1/account/roles', {
           redirectOnUnauthorized: false,
@@ -34,42 +79,64 @@ export function AuthProvider({ children }) {
         }),
       ])
 
+      // If userInfo is null the session cookie is absent or expired.
       if (!userInfo) {
         const unauthenticatedState = createUnauthenticatedState()
         setAuthState(unauthenticatedState)
         return unauthenticatedState
       }
 
-      const nextState = {
+      // Build the new auth state from the API responses.
+      let resolvedRoles = []
+      if (Array.isArray(userRoles)) {
+        resolvedRoles = userRoles
+      }
+
+      const newAuthState = {
         isAuthenticated: true,
-        isAdmin: Array.isArray(roles) && roles.includes('Administrator'),
-        roles: Array.isArray(roles) ? roles : [],
+        isAdmin: Array.isArray(userRoles) && userRoles.includes('Administrator'),
+        roles: resolvedRoles,
         user: {
           email: userInfo.email,
           claims: userInfo.claims ?? {},
         },
       }
 
-      setAuthState(nextState)
-      return nextState
+      setAuthState(newAuthState)
+      return newAuthState
     } catch {
+      // Treat any unexpected error (e.g. network failure) as unauthenticated
+      // so the app is still usable (it will show the login page).
       const unauthenticatedState = createUnauthenticatedState()
       setAuthState(unauthenticatedState)
       return unauthenticatedState
     } finally {
-      setIsLoading(false)
+      setIsLoadingAuthState(false)
     }
   }, [])
 
+  // Run the session check once when the provider first mounts.
   useEffect(() => {
     refreshAuth()
   }, [refreshAuth])
 
-  const register = useCallback(async (email, password) => {
+  // --- Auth Operations --------------------------------------------------------
+
+  /**
+   * Registers a new account with the given email and password.
+   * After successful registration the user still needs to log in separately.
+   *
+   * @param {string} emailAddress - The new user's email address.
+   * @param {string} password - The chosen password.
+   * @returns {Promise<{ succeeded: boolean, errorList: string[] }>}
+   */
+  const register = useCallback(async (emailAddress, password) => {
+    let errorMessages = ['Registration failed.']
+
     try {
       await api.post(
         'v1/account/register',
-        { email, password },
+        { email: emailAddress, password },
         {
           redirectOnUnauthorized: false,
           showToast: false,
@@ -77,59 +144,99 @@ export function AuthProvider({ children }) {
       )
 
       return { succeeded: true, errorList: [] }
-    } catch (error) {
-      const messages = error instanceof ApiError ? error.messages : ['Registration failed.']
-      return { succeeded: false, errorList: messages }
+    } catch (caughtError) {
+      if (caughtError instanceof ApiError) {
+        errorMessages = caughtError.messages
+      }
+
+      return { succeeded: false, errorList: errorMessages }
     }
   }, [])
 
-  const login = useCallback(async (email, password, twoFactorCode, twoFactorRecoveryCode) => {
-    try {
-      const response = await api.request(
-        {
-          method: 'post',
-          url: 'login?useCookies=true',
-          data: {
-            email,
-            password,
-            twoFactorCode,
-            twoFactorRecoveryCode,
+  /**
+   * Attempts to log in with the given credentials.
+   * Handles the two-factor authentication challenge by returning
+   * `prompt2FA: true` when the server signals that a 2FA code is required
+   * before the login can be completed.
+   *
+   * @param {string} emailAddress - The user's email address.
+   * @param {string} password - The user's password.
+   * @param {string|null} twoFactorCode - TOTP code from the authenticator app, if the
+   *   user is on the 2FA prompt step.
+   * @param {string|null} twoFactorRecoveryCode - Recovery code, if the user has lost
+   *   access to their authenticator app.
+   * @returns {Promise<{ succeeded: boolean, prompt2FA: boolean, errorList: string[] }>}
+   */
+  const login = useCallback(
+    async (emailAddress, password, twoFactorCode, twoFactorRecoveryCode) => {
+      try {
+        const loginResponse = await api.request(
+          {
+            method: 'post',
+            url: 'login?useCookies=true', // useCookies=true tells ASP.NET Identity to set a session cookie
+            data: {
+              email: emailAddress,
+              password,
+              twoFactorCode,
+              twoFactorRecoveryCode,
+            },
           },
-        },
-        {
-          redirectOnUnauthorized: false,
-          showToast: false,
-        },
-      )
+          {
+            redirectOnUnauthorized: false,
+            showToast: false,
+          },
+        )
 
-      if (!response) {
+        // A null response means the login endpoint returned an error body that
+        // was silently consumed  -  treat it as invalid credentials.
+        if (!loginResponse) {
+          return {
+            succeeded: false,
+            prompt2FA: false,
+            errorList: ['Invalid email and/or password.'],
+          }
+        }
+
+        // Login succeeded  -  refresh auth state to populate user info and roles.
+        await refreshAuth()
+        return { succeeded: true, prompt2FA: false, errorList: [] }
+      } catch (caughtError) {
+        // The server returns a 401 with detail "RequiresTwoFactor" when the
+        // credentials are correct but the account has 2FA enabled.  Signal this
+        // to the UI so it can show the 2FA code input instead of an error.
+        if (caughtError instanceof ApiError && caughtError.detail === 'RequiresTwoFactor') {
+          return {
+            succeeded: false,
+            prompt2FA: true,
+            errorList: [],
+          }
+        }
+
+        // Any other error is a genuine login failure (wrong password, account
+        // locked, etc.).
+        let errorMessages = ['Invalid email and/or password.']
+        if (caughtError instanceof ApiError) {
+          errorMessages = caughtError.messages
+        }
+
         return {
           succeeded: false,
           prompt2FA: false,
-          errorList: ['Invalid email and/or password.'],
+          errorList: errorMessages,
         }
       }
+    },
+    [refreshAuth],
+  )
 
-      await refreshAuth()
-      return { succeeded: true, prompt2FA: false, errorList: [] }
-    } catch (error) {
-      if (error instanceof ApiError && error.detail === 'RequiresTwoFactor') {
-        return {
-          succeeded: false,
-          prompt2FA: true,
-          errorList: [],
-        }
-      }
-
-      const messages = error instanceof ApiError ? error.messages : ['Invalid email and/or password.']
-      return {
-        succeeded: false,
-        prompt2FA: false,
-        errorList: messages,
-      }
-    }
-  }, [refreshAuth])
-
+  /**
+   * Logs the current user out by calling the server-side logout endpoint
+   * (which invalidates the session cookie) and then clears the local auth state.
+   * The finally block guarantees the local state is cleared even if the API
+   * call fails (e.g. already expired session).
+   *
+   * @returns {Promise<void>}
+   */
   const logout = useCallback(async () => {
     try {
       await api.get('v1/account/logout', {
@@ -137,32 +244,55 @@ export function AuthProvider({ children }) {
         showToast: false,
       })
     } finally {
+      try {
+        localStorage.clear()
+      } catch {
+        // Clearing persisted client state is best-effort only.
+      }
+
+      // Always clear local auth state, even if the server request fails.
       setAuthState(createUnauthenticatedState())
     }
   }, [])
 
-  const value = useMemo(
+  // --- Context Value ----------------------------------------------------------
+
+  // Memoise the context value to prevent unnecessary re-renders in consumers.
+  // The dependency array includes all state and callbacks that the value exposes.
+  const contextValue = useMemo(
     () => ({
-      ...authState,
-      isLoading,
+      ...authState, // isAuthenticated, isAdmin, roles, user
+      isLoading: isLoadingAuthState,
       login,
       logout,
       refreshAuth,
       register,
     }),
-    [authState, isLoading, login, logout, refreshAuth, register],
+    [authState, isLoadingAuthState, login, logout, refreshAuth, register],
   )
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
 }
 
+// --- Consumer Hook ------------------------------------------------------------
+
+/**
+ * Returns the current auth context value.
+ * Must be called inside a component wrapped by AuthProvider.
+ *
+ * Exposes: isAuthenticated, isAdmin, isLoading, roles, user,
+ *          login(), logout(), register(), refreshAuth().
+ *
+ * @returns {Object} The auth context value.
+ * @throws {Error} If called outside of an AuthProvider.
+ */
 // eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
-  const context = useContext(AuthContext)
+  const authContext = useContext(AuthContext)
 
-  if (!context) {
+  if (!authContext) {
     throw new Error('useAuth must be used inside AuthProvider.')
   }
 
-  return context
+  return authContext
 }

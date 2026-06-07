@@ -1,97 +1,209 @@
-/* Core layout and theme support */
-:root {
-  font-family: 'Segoe UI Variable', 'Aptos', 'Segoe UI', sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
 html,
 body,
 #root {
-  min-height: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
 }
 
-a {
-  text-decoration: none;
+a,
+a:hover,
+a:focus,
+a:active,
+a:visited {
+  text-decoration: none !important;
 }
 
-button {
-  font: inherit;
+.nav-tabs .nav-link:hover:not(.active) {
+  color: var(--bs-body-color);
+  border-color: transparent;
+  background-color: var(--bs-tertiary-bg);
 }
 
-.app-shell {
-  min-height: 100vh;
+/* ── Modal overrides ──────────────────────────────────────────────── */
+.modal-content {
+  background-color: var(--bs-body-bg);
+  border-color: var(--bs-border-color);
 }
 
-.loading-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 2000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  background-color: rgba(0, 0, 0, 0.45);
+.modal-header {
+  border-bottom-color: var(--bs-border-color);
 }
 
-.loading-overlay__panel {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.9rem 1.2rem;
-  border-radius: 0.6rem;
-  background-color: rgba(33, 37, 41, 0.92);
-  color: #fff;
-  box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.25);
+.modal-footer {
+  border-top-color: var(--bs-border-color);
 }
 
-.search-input-group > .form-control,
-.search-input-group > .btn,
-.search-input-group > .input-group-text,
-.search-input-group > .form-select {
-  border-color: var(--bs-secondary);
+/* ── Tag color swatch ─────────────────────────────────────────────── */
+.tag-color-swatch {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid var(--bs-border-color);
 }
 
-.search-input-group > .form-control:focus,
-.search-input-group > .btn:focus,
-.search-input-group > .input-group-text:focus,
-.search-input-group > .form-select:focus {
-  border-color: var(--bs-secondary);
+/* ── Toast notification ──────────────────────────────────────────── */
+.ps-toast {
+  width: min(24rem, calc(100vw - 1rem));
+  max-width: calc(100vw - 1rem);
+  display: block !important;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-1.1rem);
+  transition:
+    opacity 0.24s ease,
+    transform 0.24s ease,
+    visibility 0s linear 0.24s;
+  pointer-events: none;
 }
 
-.search-input-group > .page-size-label {
-  font-size: 0.7rem;
-  line-height: 1.05;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-width: 3.25rem;
-  padding: 0.2rem 0.4rem;
+.ps-toast .toast-body {
+  padding: 0.85rem 1rem;
+  font-size: 1rem;
 }
 
-.customer-action-row {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 0.5rem;
+.ps-toast .toast {
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  border-color: var(--bs-border-color);
 }
 
-.customer-action-row > .btn {
-  white-space: nowrap;
+.ps-toast.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  animation: ps-toast-slide-in 0.3s ease-out;
+  transition:
+    opacity 0.24s ease,
+    transform 0.24s ease;
+  pointer-events: auto;
 }
 
-.customer-action-spacer {
-  flex: 1 1 auto;
+@keyframes ps-toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-2rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
+/* ── Print ────────────────────────────────────────────────────────── */
+@media print {
+  html,
+  body,
+  #root {
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .docs-print-content,
+  .docs-print-content * {
+    visibility: visible;
+  }
+
+  .d-flex.flex-column,
+  .docs-content-shell,
+  .docs-read-view {
+    position: static !important;
+    inset: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  .docs-print-content {
+    position: static !important;
+    width: 100%;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #fff !important;
+  }
+
+  .docs-navbar,
+  .tabs-row,
+  .docs-read-controls,
+  .modal,
+  .modal-backdrop,
+  .toast-container,
+  .ps-toast {
+    display: none !important;
+  }
+
+  .docs-print-content .preview-pane {
+    max-width: none !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    color: #000 !important;
+    background: #fff !important;
+  }
+
+  .docs-print-content .preview-pane h1,
+  .docs-print-content .preview-pane h2,
+  .docs-print-content .preview-pane h3,
+  .docs-print-content .preview-pane h4,
+  .docs-print-content .preview-pane h5,
+  .docs-print-content .preview-pane h6,
+  .docs-print-content .preview-pane p,
+  .docs-print-content .preview-pane li,
+  .docs-print-content .preview-pane blockquote,
+  .docs-print-content .preview-pane code,
+  .docs-print-content .preview-pane pre,
+  .docs-print-content .preview-pane table,
+  .docs-print-content .preview-pane th,
+  .docs-print-content .preview-pane td,
+  .docs-print-content .preview-pane a {
+    color: #000 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  .docs-print-content .preview-pane a {
+    text-decoration: none;
+  }
+
+  .docs-print-content .preview-pane .markdown-heading-anchor {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+
+  .docs-print-content .preview-pane pre,
+  .docs-print-content .preview-pane blockquote,
+  .docs-print-content .preview-pane table {
+    border-color: #b8b8b8 !important;
+  }
+
+  .docs-print-content .preview-pane pre,
+  .docs-print-content .preview-pane blockquote,
+  .docs-print-content .preview-pane table,
+  .docs-print-content .preview-pane img,
+  .docs-print-content .preview-pane .mermaid-diagram {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .docs-print-content .code-copy-btn {
+    display: none !important;
+  }
+}

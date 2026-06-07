@@ -1,34 +1,42 @@
 import { useEffect, useState } from 'react'
-import { Button, Card, Col, Form, Row } from 'react-bootstrap'
 import { toast } from 'react-toastify'
 import { api } from '../services/apiClient'
 
 /**
- * Requests another email confirmation message.
+ * Allows a user who has not yet confirmed their email to request a new
+ * confirmation message.
+ *
+ * The form is disabled when the server reports that account operations are not
+ * permitted (e.g. the feature is turned off in the admin panel).
  */
 export default function ConfirmEmailResendPage() {
   const [email, setEmail] = useState('')
-  const [isDisabled, setIsDisabled] = useState(false)
+  const [isFormDisabled, setIsFormDisabled] = useState(false)
 
+  // Check whether account operations are enabled on this server.
+  // When `operations` returns false, the form is locked to prevent submissions.
   useEffect(() => {
-    async function loadStatus() {
+    async function loadOperationsStatus() {
       try {
-        const response = await api.get('v1/account/operations', {
+        const isEnabled = await api.get('v1/account/operations', {
           redirectOnUnauthorized: false,
           showToast: false,
         })
 
-        setIsDisabled(response === false)
+        // The endpoint returns `false` when account operations are disabled.
+        setIsFormDisabled(isEnabled === false)
       } catch {
-        setIsDisabled(true)
+        // If the status check fails, default to disabled to prevent submission errors.
+        setIsFormDisabled(true)
       }
     }
 
-    loadStatus()
+    loadOperationsStatus()
   }, [])
 
-  async function handleSubmit(event) {
-    event.preventDefault()
+  /** Submits the resend request and locks the form on success. */
+  async function handleSubmit(submitEvent) {
+    submitEvent.preventDefault()
 
     const response = await api.post(
       'resendConfirmationEmail',
@@ -41,38 +49,41 @@ export default function ConfirmEmailResendPage() {
 
     if (response) {
       toast.success('Done. Check your email for confirmation instructions.')
-      setIsDisabled(true)
+      // Lock the form after a successful send to prevent duplicate submissions.
+      setIsFormDisabled(true)
     }
   }
 
   return (
-    <fieldset disabled={isDisabled}>
-      <Row className="mt-4">
-        <Col lg={4} md={6} className="mx-auto">
-          <Card className="feature-card">
-            <Card.Header>
+    <fieldset disabled={isFormDisabled}>
+      <div className="row mt-4">
+        <div className="col-md-6 col-lg-4 mx-auto">
+          <div className="card feature-card">
+            <div className="card-header">
               <h2 className="h4 mb-0">Resend Email Confirmation</h2>
-            </Card.Header>
+            </div>
 
-            <Card.Body>
-              <Form onSubmit={handleSubmit}>
-                <Form.Group className="mb-3" controlId="confirmEmailResendEmail">
-                  <Form.Label>Email</Form.Label>
-                  <Form.Control
+            <div className="card-body">
+              <form onSubmit={handleSubmit}>
+                <div className="mb-3">
+                  <label className="form-label" htmlFor="confirmEmailResendEmail">Email</label>
+                  <input
+                    id="confirmEmailResendEmail"
+                    className="form-control"
                     type="email"
                     value={email}
-                    onChange={(event) => setEmail(event.target.value)}
+                    onChange={(changeEvent) => setEmail(changeEvent.target.value)}
                   />
-                </Form.Group>
+                </div>
 
                 <div className="text-end">
-                  <Button type="submit">Submit</Button>
+                  <button type="submit" className="btn btn-primary">Submit</button>
                 </div>
-              </Form>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
     </fieldset>
   )
 }

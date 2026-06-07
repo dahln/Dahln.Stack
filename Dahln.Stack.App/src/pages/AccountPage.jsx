@@ -1,44 +1,67 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Button, Card, Col, Form, Row } from 'react-bootstrap'
-import { QRCodeSVG } from 'qrcode.react'
+import { useEffect, useState } from 'react'
+import 'qrpeach'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../services/apiClient'
 
-function createConfirmState() {
-  return {
-    isOpen: false,
-    title: 'Please Confirm',
-    message: '',
-    confirmLabel: 'Confirm',
-    action: null,
-  }
-}
-
 /**
- * Account management page for profile, password, two-factor auth, and account deletion.
+ * AccountPage  -  lets the signed-in user manage their profile settings:
+ *   - Change email address
+ *   - Change password
+ *   - Enable, disable, or reset two-factor authentication (TOTP)
+ *   - Delete their account permanently
+ *
+ * Destructive operations are gated behind a ConfirmDialog before the API is called.
  */
 export default function AccountPage() {
   const auth = useAuth()
   const navigate = useNavigate()
 
+  // --- State ----------------------------------------------------------------
+
+  // Change-email form field
   const [newEmail, setNewEmail] = useState('')
+
+  // Change-password form fields
   const [oldPassword, setOldPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
 
-  const [isOperationsDisabled, setIsOperationsDisabled] = useState(false)
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(null)
+  // When true, all destructive fieldsets are disabled (server returned false for
+  // the "operations allowed" check, e.g. SMTP not configured).
+  const [areOperationsDisabled, setAreOperationsDisabled] = useState(false)
+
+  // Whether the user currently has 2FA enabled (null = not yet loaded)
+  const [isTwoFactorEnabled, setIsTwoFactorEnabled] = useState(null)
+
+  // True while the user is in the middle of 2FA setup (QR code + code entry shown)
   const [isTwoFactorSetupActive, setIsTwoFactorSetupActive] = useState(false)
+
+  // The server-generated TOTP shared secret used to build the QR code
   const [twoFactorSharedKey, setTwoFactorSharedKey] = useState('')
+
+  // Render-ready SVG markup returned by qrpeach.
+  const [twoFactorQrSvg, setTwoFactorQrSvg] = useState('')
+
+  // The 6-digit code the user types to confirm their authenticator app was enrolled
   const [twoFactorValidationCode, setTwoFactorValidationCode] = useState('')
+
+  // One-time recovery codes returned after a successful 2FA setup or reset
   const [twoFactorRecoveryCodes, setTwoFactorRecoveryCodes] = useState([])
 
-  const [confirmState, setConfirmState] = useState(createConfirmState)
+  // Current confirm action key for the shared ConfirmDialog.
+  const [confirmAction, setConfirmAction] = useState(null)
+
+  // --- Initial Data Load ----------------------------------------------------
 
   useEffect(() => {
+    /**
+     * Fetches two server values in parallel on mount:
+     *   - operationsEnabled: whether account-mutating actions are allowed
+     *   - twoFactorStatus:   whether 2FA is already enabled for this account
+     */
     async function loadPage() {
       const [operationsEnabled, twoFactorStatus] = await Promise.all([
         api.get('v1/account/operations', {
@@ -51,51 +74,123 @@ export default function AccountPage() {
         }),
       ])
 
-      setIsOperationsDisabled(operationsEnabled === false)
-      setTwoFactorEnabled(Boolean(twoFactorStatus))
+      // operationsEnabled is `false` when the server explicitly disables mutations
+      setAreOperationsDisabled(operationsEnabled === false)
+
+      // twoFactorStatus is truthy when 2FA is already active on this account
+      setIsTwoFactorEnabled(Boolean(twoFactorStatus))
     }
 
     loadPage()
   }, [])
 
-  const qrCodeValue = useMemo(() => {
-    if (!twoFactorSharedKey || !auth.user?.email) {
-      return ''
+  useEffect(() => {
+    let isCancelled = false
+
+    async function generateTwoFactorQr() {
+      if (!isTwoFactorSetupActive || !twoFactorSharedKey || !auth.user?.email) {
+        setTwoFactorQrSvg('')
+        return
+      }
+
+      const qrPeachApi = globalThis.QRPeach
+      if (!qrPeachApi?.Generate) {
+        setTwoFactorQrSvg('')
+        return
+      }
+
+      const otpAuthUri = `otpauth://totp/Dahln.Stack:${auth.user.email}?secret=${twoFactorSharedKey}&issuer=Dahln.Stack&digits=6`
+
+      const generatedAsset = await qrPeachApi.Generate(
+        {
+          type: 'uri',
+          inputs: { value: otpAuthUri },
+          version: 6,
+          ecc: 'M',
+        },
+        'svg',
+        { download: false },
+      )
+
+      if (!isCancelled && generatedAsset?.svg) {
+        setTwoFactorQrSvg(generatedAsset.svg)
+        return
+      }
+
+      if (!isCancelled) {
+        setTwoFactorQrSvg('')
+      }
     }
 
-    return `otpauth://totp/Dahln.Stack:${auth.user.email}?secret=${twoFactorSharedKey}&issuer=Dahln.Stack&digits=6`
-  }, [auth.user?.email, twoFactorSharedKey])
+    generateTwoFactorQr()
 
-  function openConfirmation(title, message, action, confirmLabel = 'Confirm') {
-    setConfirmState({
-      isOpen: true,
-      title,
-      message,
-      confirmLabel,
-      action,
-    })
+    return () => {
+      isCancelled = true
+    }
+  }, [auth.user?.email, isTwoFactorSetupActive, twoFactorSharedKey])
+
+  function getConfirmDetails() {
+    if (confirmAction === 'changeEmail') {
+      return {
+        title: 'Change Email',
+        message: 'Please confirm you want to change your email.',
+        confirmLabel: 'Confirm',
+      }
+    }
+
+    if (confirmAction === 'changePassword') {
+      return {
+        title: 'Change Password',
+        message: 'Please confirm you want to change your password.',
+        confirmLabel: 'Confirm',
+      }
+    }
+
+    if (confirmAction === 'deleteAccount') {
+      return {
+        title: 'Delete Account',
+        message: 'Please confirm you want to delete your account. This cannot be undone.',
+        confirmLabel: 'Delete',
+      }
+    }
+
+    return {
+      title: 'Please Confirm',
+      message: '',
+      confirmLabel: 'Confirm',
+    }
   }
 
-  async function changeEmail() {
-    const normalizedEmail = newEmail.trim()
+  const confirmDetails = getConfirmDetails()
 
-    const userAlreadyExists = await api.post(
+  // --- Email ----------------------------------------------------------------
+
+  /**
+   * Changes the account email address.
+   * First checks whether the new address is already taken, then submits the
+   * change. The server sends a confirmation link to the new address.
+   */
+  async function changeEmail() {
+    const trimmedEmail = newEmail.trim()
+
+    // Guard: reject the address if another account already uses it
+    const isEmailTaken = await api.post(
       'v1/account/exists',
-      { email: normalizedEmail },
+      { email: trimmedEmail },
       {
         redirectOnUnauthorized: false,
         showToast: false,
       },
     )
 
-    if (userAlreadyExists) {
+    if (isEmailTaken) {
       toast.error('Email is unavailable.')
       return
     }
 
     await api.post(
       'manage/info',
-      { newEmail: normalizedEmail },
+      { newEmail: trimmedEmail },
       {
         redirectOnUnauthorized: false,
         showToast: true,
@@ -105,6 +200,12 @@ export default function AccountPage() {
     toast.success('Email changed. Confirm the new address using the email that was sent to you.')
   }
 
+  // --- Password -------------------------------------------------------------
+
+  /**
+   * Changes the account password after verifying the two new-password fields
+   * match.  Clears all password fields on success.
+   */
   async function changePassword() {
     if (newPassword !== confirmPassword) {
       toast.error("Passwords don't match.")
@@ -126,21 +227,13 @@ export default function AccountPage() {
     setConfirmPassword('')
   }
 
-  async function deleteAccount() {
-    const response = await api.delete('v1/account')
-    if (!response) {
-      return
-    }
+  // --- 2FA ------------------------------------------------------------------
 
-    await api.get('v1/account/logout', {
-      redirectOnUnauthorized: false,
-      showToast: false,
-    })
-
-    await auth.refreshAuth()
-    navigate('/', { replace: true })
-  }
-
+  /**
+   * Step 1 of 2FA setup  -  asks the server for a new shared TOTP key, then
+   * reveals the QR code and manual-entry section so the user can enrol their
+   * authenticator app.
+   */
   async function startTwoFactorSetup() {
     const response = await api.post(
       'manage/2fa',
@@ -159,6 +252,11 @@ export default function AccountPage() {
     setIsTwoFactorSetupActive(true)
   }
 
+  /**
+   * Step 2 of 2FA setup  -  submits the TOTP code that the user read from their
+   * authenticator app to prove the enrolment succeeded.  Immediately resets the
+   * recovery codes so the user receives a fresh set.
+   */
   async function finishTwoFactorSetup() {
     await api.post(
       'manage/2fa',
@@ -172,12 +270,18 @@ export default function AccountPage() {
       },
     )
 
+    // Fetch and display a fresh set of recovery codes after successful setup
     await resetRecoveryCodes()
-    setTwoFactorEnabled(true)
+
+    setIsTwoFactorEnabled(true)
     setIsTwoFactorSetupActive(false)
     setTwoFactorValidationCode('')
   }
 
+  /**
+   * Disables 2FA entirely.  Also resets the shared key and tells the server to
+   * forget this device so the change takes effect immediately.
+   */
   async function disableTwoFactor() {
     await api.post(
       'manage/2fa',
@@ -192,12 +296,16 @@ export default function AccountPage() {
       },
     )
 
-    setTwoFactorEnabled(false)
+    setIsTwoFactorEnabled(false)
     setIsTwoFactorSetupActive(false)
     setTwoFactorSharedKey('')
     setTwoFactorRecoveryCodes([])
   }
 
+  /**
+   * Generates a brand-new set of recovery codes and stores them in state so
+   * they are displayed to the user.  Also called automatically after setup.
+   */
   async function resetRecoveryCodes() {
     const response = await api.post(
       'manage/2fa',
@@ -215,6 +323,10 @@ export default function AccountPage() {
     }
   }
 
+  /**
+   * Tells the server to forget the current browser/device so the next sign-in
+   * will prompt for a 2FA code again (even if "Remember me" was previously set).
+   */
   async function forgetMachine() {
     await api.post(
       'manage/2fa',
@@ -230,219 +342,299 @@ export default function AccountPage() {
     toast.success('PC forgotten.')
   }
 
+  // --- Account Deletion -----------------------------------------------------
+
+  /**
+   * Permanently deletes the user's account, logs them out, refreshes the auth
+   * context, and redirects to the home page.
+   */
+  async function deleteAccount() {
+    const response = await api.delete('v1/account')
+    if (!response) {
+      return
+    }
+
+    // Invalidate the server session
+    await api.get('v1/account/logout', {
+      redirectOnUnauthorized: false,
+      showToast: false,
+    })
+
+    // Clear the client-side auth state and send the user home
+    await auth.refreshAuth()
+    navigate('/', { replace: true })
+  }
+
+  // --- Render ---------------------------------------------------------------
+
   return (
     <>
-      <Row>
-        <Col>
+      <div className="row">
+        <div className="col">
           <h3>Account Settings</h3>
-        </Col>
-      </Row>
+        </div>
+      </div>
 
-      <Row className="mt-3 g-3 align-items-start">
-        <Col xs={12} md={6} xl={4}>
-          <Card>
-            <Card.Header>
+      <div className="row mt-3 g-3">
+        {/* -- Change Email Card -- */}
+        <div className="col-12 col-md-6">
+          <div className="card h-100">
+            <div className="card-header">
               <h5 className="mb-0">Change Email</h5>
-            </Card.Header>
+            </div>
 
-            <Card.Body>
+            <div className="card-body">
               <p className="mb-3">Current Email: {auth.user?.email}</p>
 
-              <fieldset disabled={isOperationsDisabled}>
-                <Form.Group className="mb-3" controlId="accountNewEmail">
-                  <Form.Control
+              <fieldset disabled={areOperationsDisabled}>
+                <div className="mb-3">
+                  <input
+                    id="accountNewEmail"
+                    className="form-control"
                     value={newEmail}
-                    onChange={(event) => setNewEmail(event.target.value)}
+                    onChange={(changeEvent) => setNewEmail(changeEvent.target.value)}
                   />
-                </Form.Group>
+                </div>
 
                 <div className="text-end">
-                  <Button
-                    onClick={() =>
-                      openConfirmation(
-                        'Change Email',
-                        'Please confirm you want to change your email.',
-                        changeEmail,
-                      )
-                    }
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => setConfirmAction('changeEmail')}
                   >
                     Save Email
-                  </Button>
+                  </button>
                 </div>
               </fieldset>
-            </Card.Body>
-          </Card>
-        </Col>
+            </div>
+          </div>
+        </div>
 
-        <Col xs={12} md={6} xl={4}>
-          <Card>
-            <Card.Header>
+        {/* -- Change Password Card -- */}
+        <div className="col-12 col-md-6">
+          <div className="card h-100">
+            <div className="card-header">
               <h5 className="mb-0">Change Password</h5>
-            </Card.Header>
+            </div>
 
-            <Card.Body>
-              <Form.Group className="mb-3" controlId="accountOldPassword">
-                <Form.Control
-                  type="password"
-                  placeholder="Old Password"
-                  value={oldPassword}
-                  onChange={(event) => setOldPassword(event.target.value)}
-                />
-              </Form.Group>
-
-              <Form.Group className="mb-3" controlId="accountNewPassword">
-                <Form.Control
-                  type="password"
-                  placeholder="New Password"
-                  value={newPassword}
-                  onChange={(event) => setNewPassword(event.target.value)}
-                />
-              </Form.Group>
-
-              <Form.Group className="mb-3" controlId="accountConfirmPassword">
-                <Form.Control
-                  type="password"
-                  placeholder="Confirm Password"
-                  value={confirmPassword}
-                  onChange={(event) => setConfirmPassword(event.target.value)}
-                />
-              </Form.Group>
-
-              <div className="text-end">
-                <Button
-                  onClick={() =>
-                    openConfirmation(
-                      'Change Password',
-                      'Please confirm you want to change your password.',
-                      changePassword,
-                    )
-                  }
-                >
-                  Save Password
-                </Button>
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
-
-        <Col xs={12} md={6} xl={4}>
-          <Card>
-            <Card.Header>
-              <h5 className="mb-0">Two Factor Authentication</h5>
-            </Card.Header>
-
-            <Card.Body>
-              {twoFactorEnabled ? (
-                <>
-                  <h5>
-                    Two Factor Authentication is <span className="text-success">ENABLED</span>
-                  </h5>
-
-                  <div className="d-flex flex-wrap gap-2 mt-3">
-                    <Button variant="danger" onClick={disableTwoFactor}>
-                      Disable 2FA
-                    </Button>
-                    <Button variant="warning" onClick={forgetMachine}>
-                      Forget this PC
-                    </Button>
-                  </div>
-
-                  {twoFactorRecoveryCodes.length > 0 ? (
-                    <div className="mt-4 text-center">
-                      <p>Print or save these recovery keys. You cannot retrieve them after leaving this page.</p>
-                      {twoFactorRecoveryCodes.map((code) => (
-                        <h6 key={code}>{code}</h6>
-                      ))}
-                    </div>
-                  ) : null}
-                </>
-              ) : isTwoFactorSetupActive ? (
-                <div className="text-center">
-                  <p>Use an authenticator app like Microsoft Authenticator to set up your 2FA profile.</p>
-
-                  {qrCodeValue ? (
-                    <div className="d-flex justify-content-center mb-3">
-                      <QRCodeSVG value={qrCodeValue} size={190} level="H" includeMargin />
-                    </div>
-                  ) : null}
-
-                  <p className="mb-1">Manually enter the key:</p>
-                  <p className="fw-semibold">{twoFactorSharedKey}</p>
-
-                  <Form.Group className="mb-3" controlId="twoFactorValidation">
-                    <Form.Label>Code from authenticator app</Form.Label>
-                    <Form.Control
-                      value={twoFactorValidationCode}
-                      onChange={(event) => setTwoFactorValidationCode(event.target.value)}
-                    />
-                  </Form.Group>
-
-                  <Button className="w-100" onClick={finishTwoFactorSetup}>
-                    Submit Code and Finish Setup
-                  </Button>
+            <div className="card-body">
+              <fieldset disabled={areOperationsDisabled}>
+                <div className="mb-3">
+                  <input
+                    id="accountOldPassword"
+                    className="form-control"
+                    type="password"
+                    placeholder="Old Password"
+                    value={oldPassword}
+                    onChange={(changeEvent) => setOldPassword(changeEvent.target.value)}
+                  />
                 </div>
-              ) : (
-                <>
-                  <h5>
-                    Two Factor Authentication is <span className="text-danger">DISABLED</span>
-                  </h5>
 
-                  <Button className="mt-3" onClick={startTwoFactorSetup}>
-                    Enable 2FA
-                  </Button>
+                <div className="mb-3">
+                  <input
+                    id="accountNewPassword"
+                    className="form-control"
+                    type="password"
+                    placeholder="New Password"
+                    value={newPassword}
+                    onChange={(changeEvent) => setNewPassword(changeEvent.target.value)}
+                  />
+                </div>
 
-                  <p className="mt-3 mb-1">Use an authenticator app to get a security code when signing in.</p>
-                  <a
-                    href="https://www.microsoft.com/en-us/security/mobile-authenticator-app"
-                    target="_blank"
-                    rel="noreferrer"
+                <div className="mb-3">
+                  <input
+                    id="accountConfirmPassword"
+                    className="form-control"
+                    type="password"
+                    placeholder="Confirm Password"
+                    value={confirmPassword}
+                    onChange={(changeEvent) => setConfirmPassword(changeEvent.target.value)}
+                  />
+                </div>
+
+                <div className="text-end">
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => setConfirmAction('changePassword')}
                   >
-                    Microsoft Authenticator App
-                  </a>
-                </>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
+                    Save Password
+                  </button>
+                </div>
+              </fieldset>
+            </div>
+          </div>
+        </div>
 
-        <Col xs={12} md={6} xl={4}>
-          <Card className="border-danger">
-            <Card.Header className="text-danger">
-              <h5 className="mb-0">Danger Zone</h5>
-            </Card.Header>
+        {/* -- Two Factor Authentication Card -- */}
+        <div className="col-12 col-md-6">
+          <div className="card" style={{ minHeight: '520px' }}>
+            <div className="card-header">
+              <h5 className="mb-0">Two Factor Authentication</h5>
+            </div>
 
-            <Card.Body>
-              <p>This will delete your account and the associated information. This operation cannot be undone.</p>
-              <Button
-                variant="danger"
-                onClick={() =>
-                  openConfirmation(
-                    'Delete Account',
-                    'Please confirm you want to delete your account. This cannot be undone.',
-                    deleteAccount,
-                    'Delete',
+            <div className="card-body">
+              {(() => {
+                if (isTwoFactorEnabled) {
+                  return (
+                    <>
+                      <h5>
+                        Two Factor Authentication is <span className="text-success">ENABLED</span>
+                      </h5>
+
+                      <div className="d-flex flex-wrap gap-2 mt-3">
+                        <button type="button" className="btn btn-danger" onClick={disableTwoFactor}>
+                          Disable 2FA
+                        </button>
+                        <button type="button" className="btn btn-warning" onClick={forgetMachine}>
+                          Forget this PC
+                        </button>
+                      </div>
+
+                      {twoFactorRecoveryCodes.length > 0 && (
+                        <div className="mt-4 text-center">
+                          <p>
+                            Print or save these recovery keys. You cannot retrieve them after leaving
+                            this page.
+                          </p>
+                          {twoFactorRecoveryCodes.map((recoveryCode) => (
+                            <h6 key={recoveryCode}>{recoveryCode}</h6>
+                          ))}
+                        </div>
+                      )}
+                    </>
                   )
                 }
+
+                if (isTwoFactorSetupActive) {
+                  return (
+                    <div className="text-center">
+                      <p>
+                        Use an authenticator app like Microsoft Authenticator to set up your 2FA
+                        profile.
+                      </p>
+
+                      {twoFactorQrSvg && (
+                        <div className="d-flex justify-content-center mb-3">
+                          <div
+                            role="img"
+                            aria-label="Two factor authentication QR code"
+                            dangerouslySetInnerHTML={{ __html: twoFactorQrSvg }}
+                          />
+                        </div>
+                      )}
+
+                      <p className="mb-1">Manually enter the key:</p>
+                      <p className="fw-semibold">{twoFactorSharedKey}</p>
+
+                      <div className="mb-3">
+                        <label className="form-label" htmlFor="twoFactorValidation">
+                          Code from authenticator app
+                        </label>
+                        <input
+                          id="twoFactorValidation"
+                          className="form-control"
+                          value={twoFactorValidationCode}
+                          onChange={(changeEvent) =>
+                            setTwoFactorValidationCode(changeEvent.target.value)
+                          }
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        className="btn btn-primary w-100"
+                        onClick={finishTwoFactorSetup}
+                      >
+                        Submit Code and Finish Setup
+                      </button>
+                    </div>
+                  )
+                }
+
+                return (
+                  <>
+                    <h5>
+                      Two Factor Authentication is <span className="text-danger">DISABLED</span>
+                    </h5>
+
+                    <button
+                      type="button"
+                      className="btn btn-primary mt-3"
+                      onClick={startTwoFactorSetup}
+                    >
+                      Enable 2FA
+                    </button>
+
+                    <p className="mt-3 mb-1">
+                      Use an authenticator app to get a security code when signing in.
+                    </p>
+                    <a
+                      href="https://www.microsoft.com/en-us/security/mobile-authenticator-app"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Microsoft Authenticator App
+                    </a>
+                  </>
+                )
+              })()}
+            </div>
+          </div>
+        </div>
+
+        {/* -- Danger Zone Card -- */}
+        <div className="col-12 col-md-6">
+          <div className="card border-danger">
+            <div className="card-header text-danger">
+              <h5 className="mb-0">Danger Zone</h5>
+            </div>
+
+            <div className="card-body">
+              <p>
+                This will delete your account and the associated information. This operation cannot
+                be undone.
+              </p>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={() => setConfirmAction('deleteAccount')}
               >
                 Delete Account
-              </Button>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
+      {/* -- Confirm Dialog --------------------------------------------------- */}
+      {/*
+        All four destructive operations (change email, change password, disable 2FA,
+        delete account) share this single dialog.  The `action` stored in
+        `confirmState` determines what runs when the user clicks Confirm.
+      */}
       <ConfirmDialog
-        isOpen={confirmState.isOpen}
-        title={confirmState.title}
-        message={confirmState.message}
-        confirmLabel={confirmState.confirmLabel}
-        onCancel={() => setConfirmState(createConfirmState())}
+        isOpen={Boolean(confirmAction)}
+        title={confirmDetails.title}
+        message={confirmDetails.message}
+        confirmLabel={confirmDetails.confirmLabel}
+        onCancel={() => setConfirmAction(null)}
         onConfirm={async () => {
-          const action = confirmState.action
-          setConfirmState(createConfirmState())
+          const pendingAction = confirmAction
+          setConfirmAction(null)
 
-          if (action) {
-            await action()
+          if (pendingAction === 'changeEmail') {
+            await changeEmail()
+            return
+          }
+
+          if (pendingAction === 'changePassword') {
+            await changePassword()
+            return
+          }
+
+          if (pendingAction === 'deleteAccount') {
+            await deleteAccount()
           }
         }}
       />

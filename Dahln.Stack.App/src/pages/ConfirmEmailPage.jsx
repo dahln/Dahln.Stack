@@ -1,37 +1,48 @@
 import { useEffect, useState } from 'react'
-import { Alert, Col, Row } from 'react-bootstrap'
 import { useSearchParams } from 'react-router-dom'
 import { api } from '../services/apiClient'
 
 /**
- * Confirms a user email using query string values from the callback URL.
+ * Confirms a user's email address using token values from the callback URL.
+ *
+ * The backend sends a link to the user's inbox that includes `userId`, `code`,
+ * and optionally `changedEmail` as query parameters.  This page reads those
+ * parameters and calls the confirmation endpoint on mount.
  */
 export default function ConfirmEmailPage() {
   const [searchParams] = useSearchParams()
-  const [confirmationFinished, setConfirmationFinished] = useState(false)
+
+  // Whether the confirmation API call has returned successfully.
+  const [isConfirmationComplete, setIsConfirmationComplete] = useState(false)
 
   useEffect(() => {
     async function confirmEmail() {
-      const code = searchParams.get('code')
+      const confirmationCode = searchParams.get('code')
       const changedEmail = searchParams.get('changedEmail')
       const userId = searchParams.get('userId')
 
-      if (!code || !userId) {
+      // Both code and userId must be present in the callback URL  -  abort
+      // silently if either is missing (e.g. the user navigated here manually).
+      if (!confirmationCode || !userId) {
         return
       }
 
-      const query = new URLSearchParams({ userId, code })
+      // Build the query string for the confirmation endpoint.
+      const queryParams = new URLSearchParams({ userId, code: confirmationCode })
+
+      // changedEmail is only present when the user changed their email address  -
+      // append it when provided so the backend can update the stored address.
       if (changedEmail) {
-        query.set('changedEmail', changedEmail)
+        queryParams.set('changedEmail', changedEmail)
       }
 
-      const response = await api.get(`confirmEmail?${query.toString()}`, {
+      const response = await api.get(`confirmEmail?${queryParams.toString()}`, {
         redirectOnUnauthorized: false,
         showToast: true,
       })
 
       if (response) {
-        setConfirmationFinished(true)
+        setIsConfirmationComplete(true)
       }
     }
 
@@ -39,14 +50,14 @@ export default function ConfirmEmailPage() {
   }, [searchParams])
 
   return (
-    <Row className="mt-4">
-      <Col>
-        {confirmationFinished ? (
-          <Alert variant="success" className="text-center">
+    <div className="row mt-4">
+      <div className="col">
+        {isConfirmationComplete && (
+          <div className="alert alert-success text-center" role="alert">
             Your email address has been verified.
-          </Alert>
-        ) : null}
-      </Col>
-    </Row>
+          </div>
+        )}
+      </div>
+    </div>
   )
 }

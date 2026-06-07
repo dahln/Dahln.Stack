@@ -3,14 +3,26 @@ import CustomerSearchPage from './CustomerSearchPage'
 import LoginPage from './LoginPage'
 
 /**
- * Home route that shows login or customer search based on auth state.
+ * Root home route.
+ *
+ * While the authentication state is resolving (e.g. a token-refresh is in
+ * flight), nothing is rendered to avoid a flash of the wrong page.
+ *
+ * Once auth is settled:
+ * - Authenticated users -> CustomerSearchPage (their customer list)
+ * - Anonymous users     -> LoginPage
  */
 export default function HomePage() {
   const auth = useAuth()
 
+  // Render nothing until the initial auth check completes.
   if (auth.isLoading) {
     return null
   }
 
-  return auth.isAuthenticated ? <CustomerSearchPage embedded /> : <LoginPage embedded />
+  if (auth.isAuthenticated) {
+    return <CustomerSearchPage embedded />
+  }
+
+  return <LoginPage embedded />
 }

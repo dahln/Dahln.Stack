@@ -1,0 +1,13 @@
+.top-nav-brand-logo {
+  height: 1.25rem;
+  object-fit: contain;
+  margin-bottom: 5px;
+}
+
+
+.brand-name {
+  font-weight: 100;
+  font-size: 1.25rem;
+  letter-spacing: 0.2em;
+}
+

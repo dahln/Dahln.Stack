@@ -79,14 +79,18 @@ internal sealed class EmailSender : IEmailSender<IdentityUser>
         };
 
         // Add headers to improve deliverability
-        emailMessage.AddCustomHeader("X-Mailer", "Dahln.Stack Application");
+        emailMessage.AddCustomHeader("X-Mailer", "Dahln.Stack");
         emailMessage.AddCustomHeader("List-Unsubscribe", $"<mailto:{fromEmail}?subject=Unsubscribe>");
 
         var response = await service.SendEmail(emailMessage);
         var redactedToEmail = RedactEmailForLog(toEmail);
-        _logger.LogInformation(response.Data?.Error == null
-                               ? $"Email to {redactedToEmail} queued successfully!"
-                               : $"Failure Email to {redactedToEmail}: {response.Data.Error}");
+        var logMessage = $"Failure Email to {redactedToEmail}: {response.Data?.Error}";
+        if (response.Data?.Error == null)
+        {
+            logMessage = $"Email to {redactedToEmail} queued successfully!";
+        }
+
+        _logger.LogInformation(logMessage);
     }
 
     private static string RedactEmailForLog(string email)
@@ -104,7 +108,12 @@ internal sealed class EmailSender : IEmailSender<IdentityUser>
 
         var localPart = email.Substring(0, atIndex);
         var domainPart = email.Substring(atIndex);
-        var visibleLocal = localPart.Length > 1 ? localPart.Substring(0, 1) : "*";
+        var visibleLocal = "*";
+        if (localPart.Length > 1)
+        {
+            visibleLocal = localPart.Substring(0, 1);
+        }
+
         return $"{visibleLocal}***{domainPart}";
     }
 
@@ -149,6 +158,7 @@ internal sealed class EmailSender : IEmailSender<IdentityUser>
         }
         else
         {
+        {
             var htmlMessage = $@"
                 <!DOCTYPE html>
                 <html>
@@ -172,6 +182,7 @@ internal sealed class EmailSender : IEmailSender<IdentityUser>
                 </html>";
             var plainMessage = $"Please confirm your account by visiting: {adjustedConfirmationLink}. Thank you.";
             return SendEmailAsync(email, "Confirm your email", htmlMessage, plainMessage);
+        }
         }
     }
 

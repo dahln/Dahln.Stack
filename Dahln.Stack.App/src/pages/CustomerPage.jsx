@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Button, Col, Form, Row } from 'react-bootstrap'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import ConfirmDialog from '../components/ConfirmDialog'
@@ -112,8 +111,8 @@ export default function CustomerPage() {
         </Link>
       </div>
 
-      <Row>
-        <Col>
+      <div className="row">
+        <div className="col">
           <h3>
             Customer{' '}
             {isLocked ? (
@@ -122,14 +121,14 @@ export default function CustomerPage() {
               </button>
             ) : null}
           </h3>
-        </Col>
-      </Row>
+        </div>
+      </div>
 
       <fieldset disabled={isLocked}>
-        <Row>
-          <Col lg={6}>
-            <Row>
-              <Col md={6} className="text-center">
+        <div className="row">
+          <div className="col-lg-6">
+            <div className="row">
+              <div className="col-md-6 text-center">
                 <div className="d-flex align-items-center justify-content-center mb-3" style={{ minHeight: '16rem' }}>
                   {customer.imageBase64 ? (
                     <img src={customer.imageBase64} alt="Customer" className="img-fluid rounded-4" />
@@ -146,39 +145,46 @@ export default function CustomerPage() {
                     </label>
 
                     {customer.imageBase64 ? (
-                      <Button
-                        variant="outline-danger"
+                      <button
+                        type="button"
+                        className="btn btn-outline-danger w-100"
                         className="w-100"
                         onClick={() => updateCustomerField('imageBase64', null)}
                       >
                         Remove Image
-                      </Button>
+                      </button>
                     ) : null}
                   </>
                 ) : null}
-              </Col>
+              </div>
 
-              <Col md={6}>
-                <Form.Group className="mb-3" controlId="customerName">
-                  <Form.Label>Name</Form.Label>
-                  <Form.Control
+              <div className="col-md-6">
+                <div className="mb-3">
+                  <label className="form-label" htmlFor="customerName">Name</label>
+                  <input
+                    id="customerName"
+                    className="form-control"
                     value={customer.name ?? ''}
                     onChange={(event) => updateCustomerField('name', event.target.value)}
                   />
-                </Form.Group>
+                </div>
 
-                <Form.Group className="mb-3" controlId="customerBirthDate">
-                  <Form.Label>Birth Date</Form.Label>
-                  <Form.Control
+                <div className="mb-3">
+                  <label className="form-label" htmlFor="customerBirthDate">Birth Date</label>
+                  <input
+                    id="customerBirthDate"
+                    className="form-control"
                     type="date"
                     value={customer.birthDate ?? ''}
                     onChange={(event) => updateCustomerField('birthDate', event.target.value)}
                   />
-                </Form.Group>
+                </div>
 
-                <Form.Group className="mb-3" controlId="customerGender">
-                  <Form.Label>Gender</Form.Label>
-                  <Form.Select
+                <div className="mb-3">
+                  <label className="form-label" htmlFor="customerGender">Gender</label>
+                  <select
+                    id="customerGender"
+                    className="form-select"
                     value={customer.gender ?? 0}
                     onChange={(event) => updateCustomerField('gender', Number(event.target.value))}
                   >
@@ -187,93 +193,110 @@ export default function CustomerPage() {
                         {option.label}
                       </option>
                     ))}
-                  </Form.Select>
-                </Form.Group>
+                  </select>
+                </div>
 
-                <Form.Check
-                  id="customerActive"
-                  label="Active"
-                  checked={Boolean(customer.active)}
-                  onChange={(event) => updateCustomerField('active', event.target.checked)}
-                />
-              </Col>
-            </Row>
-          </Col>
+                <div className="form-check">
+                  <input
+                    id="customerActive"
+                    className="form-check-input"
+                    type="checkbox"
+                    checked={Boolean(customer.active)}
+                    onChange={(event) => updateCustomerField('active', event.target.checked)}
+                  />
+                  <label className="form-check-label" htmlFor="customerActive">Active</label>
+                </div>
+              </div>
+            </div>
+          </div>
 
-          <Col lg={6}>
-            <Row>
-              <Col md={6}>
-                <Form.Group className="mb-3" controlId="customerEmail">
-                  <Form.Label>Email</Form.Label>
-                  <Form.Control
+          <div className="col-lg-6">
+            <div className="row">
+              <div className="col-md-6">
+                <div className="mb-3">
+                  <label className="form-label" htmlFor="customerEmail">Email</label>
+                  <input
+                    id="customerEmail"
+                    className="form-control"
                     value={customer.email ?? ''}
                     onChange={(event) => updateCustomerField('email', event.target.value)}
                   />
-                </Form.Group>
-              </Col>
+                </div>
+              </div>
 
-              <Col md={6}>
-                <Form.Group className="mb-3" controlId="customerPhone">
-                  <Form.Label>Phone</Form.Label>
-                  <Form.Control
+              <div className="col-md-6">
+                <div className="mb-3">
+                  <label className="form-label" htmlFor="customerPhone">Phone</label>
+                  <input
+                    id="customerPhone"
+                    className="form-control"
                     value={customer.phone ?? ''}
                     onChange={(event) => updateCustomerField('phone', event.target.value)}
                   />
-                </Form.Group>
-              </Col>
-            </Row>
+                </div>
+              </div>
+            </div>
 
-            <Form.Group className="mb-3" controlId="customerAddress">
-              <Form.Label>Address</Form.Label>
-              <Form.Control
+            <div className="mb-3">
+              <label className="form-label" htmlFor="customerAddress">Address</label>
+              <input
+                id="customerAddress"
+                className="form-control"
                 value={customer.address ?? ''}
                 onChange={(event) => updateCustomerField('address', event.target.value)}
               />
-            </Form.Group>
+            </div>
 
-            <Row>
-              <Col md={4}>
-                <Form.Group className="mb-3" controlId="customerCity">
-                  <Form.Label>City</Form.Label>
-                  <Form.Control
+            <div className="row">
+              <div className="col-md-4">
+                <div className="mb-3">
+                  <label className="form-label" htmlFor="customerCity">City</label>
+                  <input
+                    id="customerCity"
+                    className="form-control"
                     value={customer.city ?? ''}
                     onChange={(event) => updateCustomerField('city', event.target.value)}
                   />
-                </Form.Group>
-              </Col>
+                </div>
+              </div>
 
-              <Col md={4}>
-                <Form.Group className="mb-3" controlId="customerState">
-                  <Form.Label>State</Form.Label>
-                  <Form.Control
+              <div className="col-md-4">
+                <div className="mb-3">
+                  <label className="form-label" htmlFor="customerState">State</label>
+                  <input
+                    id="customerState"
+                    className="form-control"
                     value={customer.state ?? ''}
                     onChange={(event) => updateCustomerField('state', event.target.value)}
                   />
-                </Form.Group>
-              </Col>
+                </div>
+              </div>
 
-              <Col md={4}>
-                <Form.Group className="mb-3" controlId="customerPostal">
-                  <Form.Label>Postal</Form.Label>
-                  <Form.Control
+              <div className="col-md-4">
+                <div className="mb-3">
+                  <label className="form-label" htmlFor="customerPostal">Postal</label>
+                  <input
+                    id="customerPostal"
+                    className="form-control"
                     value={customer.postal ?? ''}
                     onChange={(event) => updateCustomerField('postal', event.target.value)}
                   />
-                </Form.Group>
-              </Col>
-            </Row>
+                </div>
+              </div>
+            </div>
 
-            <Form.Group className="mb-3" controlId="customerNotes">
-              <Form.Label>Notes</Form.Label>
-              <Form.Control
-                as="textarea"
+            <div className="mb-3">
+              <label className="form-label" htmlFor="customerNotes">Notes</label>
+              <textarea
+                id="customerNotes"
+                className="form-control"
                 rows={7}
                 value={customer.notes ?? ''}
                 onChange={(event) => updateCustomerField('notes', event.target.value)}
               />
-            </Form.Group>
-          </Col>
-        </Row>
+            </div>
+          </div>
+        </div>
       </fieldset>
 
       <hr />
@@ -281,19 +304,19 @@ export default function CustomerPage() {
       {!isLocked ? (
         <div className="customer-action-row">
           {id ? (
-            <Button variant="warning" onClick={() => setIsDeleteDialogOpen(true)}>
+            <button type="button" className="btn btn-warning" onClick={() => setIsDeleteDialogOpen(true)}>
               Delete
-            </Button>
+            </button>
           ) : null}
 
           <div className="customer-action-spacer" />
 
           {id ? (
-            <Button variant="outline-danger" onClick={cancelChanges}>
+            <button type="button" className="btn btn-outline-danger" onClick={cancelChanges}>
               Cancel Changes
-            </Button>
+            </button>
           ) : null}
-          <Button onClick={saveCustomer}>Save</Button>
+          <button type="button" className="btn btn-primary" onClick={saveCustomer}>Save</button>
         </div>
       ) : null}
 
