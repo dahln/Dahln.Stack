@@ -164,7 +164,7 @@ jobs:
             'fi' \
             '' \
             'APPLICATION_SLUG="${APPLICATION_NAME,,}"' \
-            'APPLICATION_DEPLOY_ROOT="/var/www/${APPLICATION_SLUG}"' \
+            'APPLICATION_DEPLOY_ROOT="/opt/${APPLICATION_SLUG}"' \
             'APPLICATION_SERVICE_NAME="kestrel-${APPLICATION_SLUG}"' \
             'APPLICATION_NGINX_SITE="${APPLICATION_SLUG}"' \
             'APPLICATION_API_EXECUTABLE="${APPLICATION_NAME}.API"' \
@@ -205,6 +205,8 @@ jobs:
             '${SUDO} rsync -a --delete "${staging_dir}/app/" "${APP_DIR}/"' \
             '${SUDO} chmod +x "${API_DIR}/${APPLICATION_API_EXECUTABLE}"' \
             '${SUDO} chown -R "${APPLICATION_USER}:${APPLICATION_USER}" "${APPLICATION_DEPLOY_ROOT}"' \
+            '${SUDO} semanage fcontext -a -t bin_t "${API_DIR}/${APPLICATION_API_EXECUTABLE}" >/dev/null 2>&1 || ${SUDO} semanage fcontext -m -t bin_t "${API_DIR}/${APPLICATION_API_EXECUTABLE}" >/dev/null 2>&1' \
+            '${SUDO} restorecon -v "${API_DIR}/${APPLICATION_API_EXECUTABLE}" >/dev/null 2>&1 || true' \
             'if ! ${SUDO} test -f "${APP_DIR}/index.html"; then' \
             '    echo "Expected ${APP_DIR}/index.html after deployment, but it was not found." >&2' \
             '    exit 1' \

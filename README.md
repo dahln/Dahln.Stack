@@ -131,9 +131,9 @@ Before the first deployment:
 
 The workflow derives the rest from `APPLICATIONNAME` and the standard deployment layout:
 
-- Deploy root: `/var/www/${APPLICATIONNAME,,}`
-- API deploy path: `/var/www/${APPLICATIONNAME,,}/api`
-- App deploy path: `/var/www/${APPLICATIONNAME,,}/app`
+- Deploy root: `/opt/${APPLICATIONNAME,,}`
+- API deploy path: `/opt/${APPLICATIONNAME,,}/api`
+- App deploy path: `/opt/${APPLICATIONNAME,,}/app`
 - systemd service: `kestrel-${APPLICATIONNAME,,}`
 - Nginx site name: `${APPLICATIONNAME,,}`
 - API executable: `${APPLICATIONNAME}.API`
