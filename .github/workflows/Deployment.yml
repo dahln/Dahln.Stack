@@ -173,6 +173,7 @@ jobs:
             'APP_ARCHIVE="${APPLICATION_NAME}.App-${RELEASE_TAG}.zip"' \
             'API_DIR="${APPLICATION_DEPLOY_ROOT}/api"' \
             'APP_DIR="${APPLICATION_DEPLOY_ROOT}/app"' \
+            'NGINX_GLOBAL_UPLOAD_LIMITS_CONF="/etc/nginx/conf.d/00-global-upload-limits.conf"' \
             'NGINX_CONF="/etc/nginx/conf.d/${APPLICATION_NGINX_SITE}.conf"' \
             'SERVICE_FILE="/etc/systemd/system/${APPLICATION_SERVICE_NAME}.service"' \
             'SERVER_NAME="_"' \
@@ -219,6 +220,8 @@ jobs:
             '${SUDO} systemctl daemon-reload' \
             '${SUDO} systemctl enable "${APPLICATION_SERVICE_NAME}.service" >/dev/null 2>&1' \
             '${SUDO} systemctl restart "${APPLICATION_SERVICE_NAME}.service"' \
+            '' \
+            "printf '%s\\n' 'client_max_body_size 100m;' | \${SUDO} tee \"\${NGINX_GLOBAL_UPLOAD_LIMITS_CONF}\" > /dev/null" \
             '' \
             'if [[ ! -f "${NGINX_CONF}" ]] || ! grep -q "ssl_certificate" "${NGINX_CONF}"; then' \
             '    route_prefix="${APPLICATION_API_ROUTE_PREFIX}"' \
