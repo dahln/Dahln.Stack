@@ -4,6 +4,28 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import DahlnStackLogo from './DahlnStackLogo'
 
+const THEME_STORAGE_KEY = 'dahln.stack.theme'
+
+function readInitialTheme() {
+  const fallbackTheme = 'light'
+
+  try {
+    const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY)
+
+    if (storedTheme === 'dark') {
+      return 'dark'
+    }
+
+    if (storedTheme === 'light') {
+      return 'light'
+    }
+  } catch {
+    return fallbackTheme
+  }
+
+  return fallbackTheme
+}
+
 /**
  * The sticky top navigation bar rendered on every page.
  *
@@ -13,8 +35,9 @@ import DahlnStackLogo from './DahlnStackLogo'
  *  - Surfaces a single Toolkit link for shared document support features.
  *  - Collapses to a hamburger menu on small screens (Bootstrap responsive).
  *  - Automatically closes the hamburger menu after any navigation.
+ *  - Owns the dark/light theme toggle.
  */
-export default function TopNavigation({ onThemeToggle, themeToggleIconClassName, nextThemeLabel }) {
+export default function TopNavigation() {
   // --- State & Context ----------------------------------------------------
 
   // Whether the mobile hamburger menu is currently expanded.
@@ -25,6 +48,37 @@ export default function TopNavigation({ onThemeToggle, themeToggleIconClassName,
 
   // Auth state: tells us whether the user is logged in, their role, and features.
   const authContext = useAuth()
+
+  // Active theme ('light' | 'dark').
+  const [theme, setTheme] = useState(readInitialTheme)
+
+  // --- Theme Management ---------------------------------------------------
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-bs-theme', theme)
+
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, theme)
+    } catch {
+      // Ignore storage write failures (private mode, blocked storage, etc.).
+    }
+  }, [theme])
+
+  function toggleTheme() {
+    if (theme === 'light') {
+      setTheme('dark')
+    } else {
+      setTheme('light')
+    }
+  }
+
+  let themeIconClassName = 'bi bi-moon-fill'
+  let nextThemeLabel = 'dark'
+
+  if (theme === 'dark') {
+    themeIconClassName = 'bi bi-sun-fill'
+    nextThemeLabel = 'light'
+  }
 
   // --- Auto-Close Mobile Menu on Navigation -------------------------------
 
@@ -133,11 +187,11 @@ export default function TopNavigation({ onThemeToggle, themeToggleIconClassName,
             <button
               type="button"
               className="theme-toggle-btn top-nav-theme-toggle"
-              onClick={onThemeToggle}
+              onClick={toggleTheme}
               aria-label={`Switch to ${nextThemeLabel} theme`}
               title={`Switch to ${nextThemeLabel} theme`}
             >
-              <i className={themeToggleIconClassName} aria-hidden="true" />
+              <i className={themeIconClassName} aria-hidden="true" />
             </button>
           </div>
         </div>
