@@ -83,38 +83,14 @@ internal sealed class EmailSender : IEmailSender<IdentityUser>
         emailMessage.AddCustomHeader("List-Unsubscribe", $"<mailto:{fromEmail}?subject=Unsubscribe>");
 
         var response = await service.SendEmail(emailMessage);
-        var redactedToEmail = RedactEmailForLog(toEmail);
-        var logMessage = $"Failure Email to {redactedToEmail}: {response.Data?.Error}";
         if (response.Data?.Error == null)
         {
-            logMessage = $"Email to {redactedToEmail} queued successfully!";
+            _logger.LogInformation("Email queued successfully.");
         }
-
-        _logger.LogInformation(logMessage);
-    }
-
-    private static string RedactEmailForLog(string email)
-    {
-        if (string.IsNullOrWhiteSpace(email))
+        else
         {
-            return "[Address is Null or Empty]";
+            _logger.LogWarning("Email send failed: {ProviderError}", response.Data.Error);
         }
-
-        var atIndex = email.IndexOf('@');
-        if (atIndex <= 0 || atIndex == email.Length - 1)
-        {
-            return "[Address does not have a valid @]";
-        }
-
-        var localPart = email.Substring(0, atIndex);
-        var domainPart = email.Substring(atIndex);
-        var visibleLocal = "*";
-        if (localPart.Length > 1)
-        {
-            visibleLocal = localPart.Substring(0, 1);
-        }
-
-        return $"{visibleLocal}***{domainPart}";
     }
 
     //This is the stock method.
