@@ -1,31 +1,8 @@
 import './AppLayout.css'
 import { ToastContainer } from 'react-toastify'
 import { useLocation } from 'react-router-dom'
-import { useEffect, useState } from 'react'
 import LoadingOverlay from './LoadingOverlay'
 import TopNavigation from './TopNavigation'
-
-const THEME_STORAGE_KEY = 'dahln.stack.theme'
-
-function readInitialTheme() {
-  const fallbackTheme = 'light'
-
-  try {
-    const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY)
-
-    if (storedTheme === 'dark') {
-      return 'dark'
-    }
-
-    if (storedTheme === 'light') {
-      return 'light'
-    }
-  } catch {
-    return fallbackTheme
-  }
-
-  return fallbackTheme
-}
 
 /**
  * The persistent application shell that wraps every page in the app.
@@ -42,33 +19,6 @@ function readInitialTheme() {
 export default function AppLayout({ children }) {
   const currentLocation = useLocation()
   const isPublicShareView = currentLocation.pathname.startsWith('/share/')
-  const [theme, setTheme] = useState(readInitialTheme)
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-bs-theme', theme)
-
-    try {
-      window.localStorage.setItem(THEME_STORAGE_KEY, theme)
-    } catch {
-      // Ignore storage write failures (private mode, blocked storage, etc.).
-    }
-  }, [theme])
-
-  function toggleTheme() {
-    if (theme === 'light') {
-      setTheme('dark')
-    } else {
-      setTheme('light')
-    }
-  }
-
-  let iconClassName = 'bi bi-moon-fill'
-  let nextThemeLabel = 'dark'
-
-  if (theme === 'dark') {
-    iconClassName = 'bi bi-sun-fill'
-    nextThemeLabel = 'light'
-  }
 
   return (
     <div className="app-shell">
@@ -80,16 +30,6 @@ export default function AppLayout({ children }) {
 
       {/* Main content area with shared page padding around all routed pages. */}
       <main className="app-content">{children}</main>
-
-      <button
-        type="button"
-        className="theme-toggle-btn"
-        onClick={toggleTheme}
-        aria-label={`Switch to ${nextThemeLabel} theme`}
-        title={`Switch to ${nextThemeLabel} theme`}
-      >
-        <i className={iconClassName} aria-hidden="true" />
-      </button>
 
       {/* Toast notifications appear here; autoClose=8000ms gives users time to read them. */}
       <ToastContainer position="bottom-left" autoClose={8000} newestOnTop />
