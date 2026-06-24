@@ -22,10 +22,9 @@ const DEFAULT_SORT_COLUMN = 'Email'
 /**
  * AdminPage  -  restricted to administrators.
  *
- * Three sections:
+ * Two sections:
  *   1. System Settings  -  email API key, sender address, domain restriction, registration toggle
- *   2. Document Store   -  configure the MongoDB connection string
- *   3. Users            -  search, paginate, toggle admin role, and delete users
+ *   2. Users            -  search, paginate, toggle admin role, and delete users
  */
 export default function AdminPage() {
   // --- State: System Settings -----------------------------------------------
@@ -37,23 +36,6 @@ export default function AdminPage() {
     emailDomainRestriction: '',
     registrationEnabled: true,
   })
-
-  // --- State: MongoDB Connection --------------------------------------------
-
-  /** True when the server already has a connection string stored (value is hidden) */
-  const [hasMongoConnectionString, setHasMongoConnectionString] = useState(false)
-
-  /** True when the stored connection string has been successfully verified */
-  const [isMongoConnectionVerified, setIsMongoConnectionVerified] = useState(false)
-
-  /** The connection string the admin is about to save (cleared after save) */
-  const [mongoConnectionString, setMongoConnectionString] = useState('')
-
-  /** Busy flag  -  prevents double-clicks on the save button */
-  const [isSavingMongoConnection, setIsSavingMongoConnection] = useState(false)
-
-  /** User-facing status message in the Document Store card */
-  const [mongoConnectionSuccess, setMongoConnectionSuccess] = useState('')
 
   // --- State: User Search ---------------------------------------------------
 
@@ -72,7 +54,7 @@ export default function AdminPage() {
   // --- Load Settings --------------------------------------------------------
 
   /**
-   * Fetches current system settings and MongoDB connection status from the server.
+   * Fetches current system settings from the server.
    * Wrapped in useCallback so it can be listed as a stable dependency in the
    * initial useEffect without causing infinite re-renders.
    */
@@ -85,8 +67,6 @@ export default function AdminPage() {
         emailDomainRestriction: response.emailDomainRestriction ?? '',
         registrationEnabled: Boolean(response.registrationEnabled),
       })
-      setHasMongoConnectionString(response.hasMongoDBConnectionString ?? false)
-      setIsMongoConnectionVerified(response.mongoDBConnectionVerified ?? false)
     }
   }, [])
 
@@ -201,58 +181,6 @@ export default function AdminPage() {
     )
   }
 
-  // --- MongoDB Handlers -----------------------------------------------------
-
-  /**
-   * Saves a new (or replacement) MongoDB connection string to the server.
-   * Clears the input field on success so the sensitive value is not left on screen.
-   */
-  async function saveMongoConnectionString() {
-    if (!mongoConnectionString.trim()) {
-      return
-    }
-
-    setIsSavingMongoConnection(true)
-    setMongoConnectionSuccess('')
-
-    try {
-      await api.put('v1/settings', {
-        ...systemSettings,
-        mongoDBConnectionString: mongoConnectionString.trim(),
-      })
-
-      setHasMongoConnectionString(true)
-      setIsMongoConnectionVerified(false)
-      setMongoConnectionString('')
-      setMongoConnectionSuccess('Connection string saved.')
-    } finally {
-      setIsSavingMongoConnection(false)
-    }
-  }
-
-  /**
-   * Removes the stored MongoDB connection string from the server, effectively
-   * disabling the document store.
-   */
-  async function clearMongoConnectionString() {
-    setIsSavingMongoConnection(true)
-    setMongoConnectionSuccess('')
-
-    try {
-      await api.put('v1/settings', {
-        ...systemSettings,
-        mongoDBConnectionString: '',
-      })
-
-      setHasMongoConnectionString(false)
-      setIsMongoConnectionVerified(false)
-      setMongoConnectionString('')
-      setMongoConnectionSuccess('Document store connection cleared.')
-    } finally {
-      setIsSavingMongoConnection(false)
-    }
-  }
-
   // --- User Actions ---------------------------------------------------------
 
   /**
@@ -360,108 +288,6 @@ export default function AdminPage() {
                   </button>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* -- Document Store Card -- */}
-        <div className="col-12 col-md-6">
-          <div className="card">
-            <div className="card-header">
-              <h5 className="mb-0">Document Store</h5>
-            </div>
-
-            <div className="card-body">
-              <p className="text-muted mb-3">
-                Documents and images are stored in MongoDB. Provide a connection string to any
-                MongoDB instance (self-hosted, cloud, Atlas, etc.).
-              </p>
-
-              {/* Connection status badge */}
-              <div className="mb-3 d-flex align-items-center gap-2">
-                <span className="small text-secondary">Status:</span>
-                {(() => {
-                  if (isMongoConnectionVerified) {
-                    return <span className="badge bg-success">Connected</span>
-                  }
-
-                  if (hasMongoConnectionString) {
-                    return <span className="badge bg-warning text-dark">Not verified</span>
-                  }
-
-                  return <span className="badge bg-danger">Not connected</span>
-                })()}
-              </div>
-
-              {mongoConnectionSuccess && (
-                <div className="alert alert-success py-2 small">{mongoConnectionSuccess}</div>
-              )}
-
-              {hasMongoConnectionString && (
-                <div className="mb-3 d-flex align-items-center gap-2 flex-wrap">
-                  <span className="small text-secondary">A connection string is stored.</span>
-
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-outline-danger"
-                    onClick={clearMongoConnectionString}
-                    disabled={isSavingMongoConnection}
-                  >
-                    Clear Connection String
-                  </button>
-                </div>
-              )}
-
-              {/* New / replacement connection string form */}
-              <form
-                onSubmit={(submitEvent) => {
-                  submitEvent.preventDefault()
-                  saveMongoConnectionString()
-                }}
-              >
-                <div style={{ display: 'grid', gap: '1rem', maxWidth: '32rem' }}>
-                  <div>
-                    <label className="form-label" htmlFor="settingsMongoConnectionString">
-                      {(() => {
-                        if (hasMongoConnectionString) {
-                          return 'Replace Connection String'
-                        }
-
-                        return 'Connection String'
-                      })()}
-                    </label>
-                    <input
-                      id="settingsMongoConnectionString"
-                      className="form-control"
-                      type="password"
-                      value={mongoConnectionString}
-                      onChange={(changeEvent) => setMongoConnectionString(changeEvent.target.value)}
-                      placeholder="mongodb://... or mongodb+srv://..."
-                      autoComplete="new-password"
-                    />
-                  </div>
-
-                  <div>
-                    <button
-                      type="submit"
-                      className="btn btn-primary"
-                      disabled={isSavingMongoConnection || !mongoConnectionString.trim()}
-                    >
-                      {(() => {
-                        if (isSavingMongoConnection) {
-                          return 'Saving...'
-                        }
-
-                        if (hasMongoConnectionString) {
-                          return 'Replace'
-                        }
-
-                        return 'Save'
-                      })()}
-                    </button>
-                  </div>
-                </div>
-              </form>
             </div>
           </div>
         </div>
