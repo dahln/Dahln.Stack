@@ -73,23 +73,19 @@ export default function AppLayout({ children }) {
   return (
     <div className="app-shell">
       {/* Sticky top navigation bar with links and user info. */}
-      {!isPublicShareView && <TopNavigation />}
+      {!isPublicShareView && (
+        <TopNavigation
+          onThemeToggle={toggleTheme}
+          themeToggleIconClassName={iconClassName}
+          nextThemeLabel={nextThemeLabel}
+        />
+      )}
 
       {/* Full-page loading overlay  -  renders nothing when no requests are active. */}
       <LoadingOverlay />
 
       {/* Main content area with shared page padding around all routed pages. */}
       <main className="app-content">{children}</main>
-
-      <button
-        type="button"
-        className="theme-toggle-btn"
-        onClick={toggleTheme}
-        aria-label={`Switch to ${nextThemeLabel} theme`}
-        title={`Switch to ${nextThemeLabel} theme`}
-      >
-        <i className={iconClassName} aria-hidden="true" />
-      </button>
 
       {/* Toast notifications appear here; autoClose=8000ms gives users time to read them. */}
       <ToastContainer position="bottom-left" autoClose={8000} newestOnTop />

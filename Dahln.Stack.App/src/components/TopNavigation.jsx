@@ -14,7 +14,7 @@ import DahlnStackLogo from './DahlnStackLogo'
  *  - Collapses to a hamburger menu on small screens (Bootstrap responsive).
  *  - Automatically closes the hamburger menu after any navigation.
  */
-export default function TopNavigation() {
+export default function TopNavigation({ onThemeToggle, themeToggleIconClassName, nextThemeLabel }) {
   // --- State & Context ----------------------------------------------------
 
   // Whether the mobile hamburger menu is currently expanded.
@@ -31,18 +31,8 @@ export default function TopNavigation() {
   // Whenever the user navigates to a new page, collapse the hamburger menu so
   // it doesn't remain open over the new page's content.
   useEffect(() => {
-    if (!isMobileMenuExpanded) {
-      return undefined
-    }
-
-    const closeMenuTimeoutId = window.setTimeout(() => {
-      setIsMobileMenuExpanded(false)
-    }, 0)
-
-    return () => {
-      window.clearTimeout(closeMenuTimeoutId)
-    }
-  }, [currentLocation.pathname, isMobileMenuExpanded])
+    setIsMobileMenuExpanded(false)
+  }, [currentLocation.pathname])
 
   // --- Render ----------------------------------------------------------
 
@@ -134,6 +124,15 @@ export default function TopNavigation() {
         >
           <div className="navbar-nav ms-auto align-items-lg-center gap-lg-1">
             {renderNavigationLinks()}
+            <button
+              type="button"
+              className="theme-toggle-btn top-nav-theme-toggle"
+              onClick={onThemeToggle}
+              aria-label={`Switch to ${nextThemeLabel} theme`}
+              title={`Switch to ${nextThemeLabel} theme`}
+            >
+              <i className={themeToggleIconClassName} aria-hidden="true" />
+            </button>
           </div>
         </div>
       </div>

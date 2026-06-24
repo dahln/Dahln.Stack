@@ -11,3 +11,13 @@
   letter-spacing: 0.2em;
 }
 
+.top-nav-theme-toggle {
+  margin-top: 0.5rem;
+}
+
+@media (min-width: 992px) {
+  .top-nav-theme-toggle {
+    margin-top: 0;
+    margin-left: 0.6rem;
+  }
+}
