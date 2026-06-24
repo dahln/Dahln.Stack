@@ -31,7 +31,13 @@ export default function TopNavigation({ onThemeToggle, themeToggleIconClassName,
   // Whenever the user navigates to a new page, collapse the hamburger menu so
   // it doesn't remain open over the new page's content.
   useEffect(() => {
-    setIsMobileMenuExpanded(false)
+    const closeMenuTimeoutId = window.setTimeout(() => {
+      setIsMobileMenuExpanded(false)
+    }, 0)
+
+    return () => {
+      window.clearTimeout(closeMenuTimeoutId)
+    }
   }, [currentLocation.pathname])
 
   // --- Render ----------------------------------------------------------
