@@ -191,8 +191,12 @@ jobs:
             '${SUDO} firewall-cmd --reload >/dev/null 2>&1 || true' \
             '' \
             'if ! id "${APPLICATION_USER}" >/dev/null 2>&1; then' \
-            '    ${SUDO} useradd --system --no-create-home --shell /sbin/nologin "${APPLICATION_USER}"' \
+            '    ${SUDO} useradd --system --create-home --home-dir "/var/lib/${APPLICATION_USER}" --shell /sbin/nologin "${APPLICATION_USER}"' \
             'fi' \
+            'APP_USER_HOME="/var/lib/${APPLICATION_USER}"' \
+            '${SUDO} mkdir -p "${APP_USER_HOME}/.aspnet/DataProtection-Keys"' \
+            '${SUDO} chown -R "${APPLICATION_USER}:${APPLICATION_USER}" "${APP_USER_HOME}"' \
+            '${SUDO} chmod -R 700 "${APP_USER_HOME}"' \
             '' \
             'staging_dir=$(mktemp -d)' \
             'trap '\''rm -rf "${staging_dir}"; rm -f "/tmp/${API_ARCHIVE}" "/tmp/${APP_ARCHIVE}"'\'' EXIT' \
@@ -215,7 +219,7 @@ jobs:
             '${SUDO} semanage fcontext -a -t httpd_sys_content_t "${APP_DIR}(/.*)?" >/dev/null 2>&1 || ${SUDO} semanage fcontext -m -t httpd_sys_content_t "${APP_DIR}(/.*)?" >/dev/null 2>&1' \
             '${SUDO} restorecon -RF "${APP_DIR}" >/dev/null 2>&1 || true' \
             '' \
-            "printf '%s\\n' '[Unit]' \"Description=\${APPLICATION_NAME} API\" 'After=network.target' 'Wants=network.target' '' '[Service]' \"WorkingDirectory=\${API_DIR}\" \"ExecStart=\${API_DIR}/\${APPLICATION_API_EXECUTABLE}\" 'Restart=always' 'RestartSec=10' 'KillSignal=SIGINT' \"SyslogIdentifier=\${APPLICATION_SERVICE_NAME}\" \"User=\${APPLICATION_USER}\" 'Environment=ASPNETCORE_ENVIRONMENT=Production' \"Environment=ASPNETCORE_URLS=http://localhost:\${APPLICATION_API_PORT}\" '' '[Install]' 'WantedBy=multi-user.target' | \${SUDO} tee \"\${SERVICE_FILE}\" > /dev/null" \
+            "printf '%s\\n' '[Unit]' \"Description=\${APPLICATION_NAME} API\" 'After=network.target' 'Wants=network.target' '' '[Service]' \"WorkingDirectory=\${API_DIR}\" \"ExecStart=\${API_DIR}/\${APPLICATION_API_EXECUTABLE}\" 'Restart=always' 'RestartSec=10' 'KillSignal=SIGINT' \"SyslogIdentifier=\${APPLICATION_SERVICE_NAME}\" \"User=\${APPLICATION_USER}\" 'UMask=0077' \"Environment=HOME=\${APP_USER_HOME}\" 'Environment=ASPNETCORE_ENVIRONMENT=Production' \"Environment=ASPNETCORE_URLS=http://localhost:\${APPLICATION_API_PORT}\" '' '[Install]' 'WantedBy=multi-user.target' | \${SUDO} tee \"\${SERVICE_FILE}\" > /dev/null" \
             '' \
             '${SUDO} systemctl daemon-reload' \
             '${SUDO} systemctl enable "${APPLICATION_SERVICE_NAME}.service" >/dev/null 2>&1' \

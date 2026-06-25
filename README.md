@@ -165,4 +165,3 @@ This project uses the Unlicense. See `LICENSE` for the full text.
 - [Identity API with WebAPI](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity-api-authorization?view=aspnetcore-8.0)
 - [EF Core CLI](https://learn.microsoft.com/en-us/ef/core/cli/dotnet)
 
-
