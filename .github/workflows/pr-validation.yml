@@ -2,7 +2,8 @@ name: PR Validation
 
 on:
   pull_request:
-    branches:
+    types: [opened, reopened, synchronize]
+    branches-ignore:
       - master
     paths-ignore:
       - '**/*.md'
