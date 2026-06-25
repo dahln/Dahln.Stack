@@ -4,13 +4,10 @@
 [![Latest Release](https://img.shields.io/github/v/release/dahln/Dahln.Stack?label=Latest%20Release)](https://github.com/dahln/Dahln.Stack/releases/latest)
 
 
-
-- [ ] DEMO: Coming soon
-- [x] Release-driven Fedora deployment workflow
-- [x] Add badges
+**Demo**: https://web.dahln.com
 
 ## Overview
-Dahln.Stack is am Opinionated .NET 10 + React starter template using a **decoupled proxy** architecture. The API and frontend run as independent processes during development and are deployed as separate applications behind Nginx in production.
+Dahln.Stack is am Opinionated .NET 10 + React starter template using a **decoupled proxy** architecture. This template includes all the things that I include in most of my projects - I created this template to streamline project creation for new projects and ideas.
 
 ## 2026 Announcement & Update
 With the latest updates, I have decided to refocus this template project on React. Working with Blazor WASM is fun, and I'm passionate about Blazor. However, over the past 2 years the only Blazor work I have done has been my own 'passion projects', and even some of those projects are now in React. I'm rebranding the project to 'Dahln.Stack', emphasizing that this is my preferred stack choice, at the moment. This rename will make future technology pivots more fluid. I have branched the current Blazor version and will keep that, and other archived branches, as a reference. Until recently my changes have been in another branch, and in order to finish the template restructuring I must now bring them into the master branch - your patience is appreciated while I finalize my current changes.
@@ -22,6 +19,8 @@ With the latest updates, I have decided to refocus this template project on Reac
 - `Dahln.Stack.Database`: EF Core DbContext, entities, and migrations
 - `Dahln.Stack.Dto`: shared DTOs and enums
 - `Dahln.Stack.Test`: unit tests for service logic
+
+Note: The API and frontend run as independent processes during development and are deployed as separate applications behind Nginx in production.
 
 ![Architecture-Image](https://github.com/dahln/Dahln.Stack/blob/b2723fc1f21b5b9b75edf0678ff45065da551ca1/ArchitectureDiagram.png)
 
