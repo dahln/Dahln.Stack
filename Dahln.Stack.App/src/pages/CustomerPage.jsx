@@ -147,8 +147,7 @@ export default function CustomerPage() {
                     {customer.imageBase64 ? (
                       <button
                         type="button"
-                        className="btn btn-outline-danger w-100"
-                        className="w-100"
+                        className="btn btn-danger w-100"
                         onClick={() => updateCustomerField('imageBase64', null)}
                       >
                         Remove Image
@@ -302,21 +301,21 @@ export default function CustomerPage() {
       <hr />
 
       {!isLocked ? (
-        <div className="customer-action-row">
+        <div className="d-flex flex-column flex-sm-row gap-2 align-items-stretch align-items-sm-center">
           {id ? (
             <button type="button" className="btn btn-warning" onClick={() => setIsDeleteDialogOpen(true)}>
               Delete
             </button>
           ) : null}
 
-          <div className="customer-action-spacer" />
-
-          {id ? (
-            <button type="button" className="btn btn-outline-danger" onClick={cancelChanges}>
-              Cancel Changes
-            </button>
-          ) : null}
-          <button type="button" className="btn btn-primary" onClick={saveCustomer}>Save</button>
+          <div className="ms-sm-auto d-flex flex-column flex-sm-row gap-2">
+            {id ? (
+              <button type="button" className="btn btn-outline-danger" onClick={cancelChanges}>
+                Cancel Changes
+              </button>
+            ) : null}
+            <button type="button" className="btn btn-primary" onClick={saveCustomer}>Save</button>
+          </div>
         </div>
       ) : null}
 
