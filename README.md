@@ -148,6 +148,7 @@ The deployment workflow then:
 - configures `firewalld`
 - creates the application system user when missing
 - deploys the API and app packages with `rsync`
+- persists the service user home and default ASP.NET Core Data Protection key ring so existing auth cookies survive API restarts
 - verifies that `index.html` exists after app deployment
 - creates or updates the systemd service
 - creates or updates the Nginx site configuration
@@ -164,5 +165,4 @@ This project uses the Unlicense. See `LICENSE` for the full text.
 ## Resources
 - [Identity API with WebAPI](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity-api-authorization?view=aspnetcore-8.0)
 - [EF Core CLI](https://learn.microsoft.com/en-us/ef/core/cli/dotnet)
-
 
