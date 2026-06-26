@@ -94,15 +94,23 @@ jobs:
         run: |
           set -euo pipefail
 
-          api_archive="${APPLICATION_NAME}.API-${RELEASE_TAG}-linux-x64.zip"
-          app_archive="${APPLICATION_NAME}.App-${RELEASE_TAG}.zip"
-
           mkdir -p release-assets
           gh release download "$RELEASE_TAG" \
             --repo "$GITHUB_REPOSITORY" \
             --dir release-assets \
-            --pattern "$api_archive" \
-            --pattern "$app_archive"
+            --pattern "*.API-${RELEASE_TAG}-linux-x64.zip" \
+            --pattern "*.App-${RELEASE_TAG}.zip"
+
+          api_archive=$(find release-assets -name "*.API-${RELEASE_TAG}-linux-x64.zip" -printf "%f\n" | head -1)
+          app_archive=$(find release-assets -name "*.App-${RELEASE_TAG}.zip" -printf "%f\n" | head -1)
+
+          if [[ -z "$api_archive" || -z "$app_archive" ]]; then
+            echo "::error::Could not locate expected release assets after download."
+            exit 1
+          fi
+
+          echo "API_ARCHIVE=$api_archive" >> "$GITHUB_ENV"
+          echo "APP_ARCHIVE=$app_archive" >> "$GITHUB_ENV"
 
       - name: Configure SSH agent
         uses: webfactory/ssh-agent@v0.9.0
@@ -125,12 +133,10 @@ jobs:
           set -euo pipefail
 
           server_port="${SERVER_PORT:-22}"
-          api_archive="${APPLICATION_NAME}.API-${RELEASE_TAG}-linux-x64.zip"
-          app_archive="${APPLICATION_NAME}.App-${RELEASE_TAG}.zip"
 
           scp -P "$server_port" \
-            "release-assets/$api_archive" \
-            "release-assets/$app_archive" \
+            "release-assets/$API_ARCHIVE" \
+            "release-assets/$APP_ARCHIVE" \
             "$SERVER_USERNAME@$SERVER_ADDRESS:/tmp/"
 
       - name: Deploy release over SSH
@@ -146,6 +152,8 @@ jobs:
             APPLICATION_NAME
             APPLICATION_USER
             APPLICATION_API_PORT
+            API_ARCHIVE
+            APP_ARCHIVE
           )
 
           remote_env=""
@@ -169,8 +177,6 @@ jobs:
             'APPLICATION_NGINX_SITE="${APPLICATION_SLUG}"' \
             'APPLICATION_API_EXECUTABLE="${APPLICATION_NAME}.API"' \
             'APPLICATION_API_ROUTE_PREFIX="/api"' \
-            'API_ARCHIVE="${APPLICATION_NAME}.API-${RELEASE_TAG}-linux-x64.zip"' \
-            'APP_ARCHIVE="${APPLICATION_NAME}.App-${RELEASE_TAG}.zip"' \
             'API_DIR="${APPLICATION_DEPLOY_ROOT}/api"' \
             'APP_DIR="${APPLICATION_DEPLOY_ROOT}/app"' \
             'NGINX_GLOBAL_UPLOAD_LIMITS_CONF="/etc/nginx/conf.d/00-global-upload-limits.conf"' \
