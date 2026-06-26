@@ -4,7 +4,7 @@
 [![Latest Release](https://img.shields.io/github/v/release/dahln/Peach.Stack?label=Latest%20Release)](https://github.com/dahln/Peach.Stack/releases/latest)
 
 
-**Demo**: Coming soon.
+**Demo**: https://web.dahln.com
 
 ## Overview
 Peach.Stack is an opinionated .NET 10 + React starter template using a **decoupled proxy** architecture. This template includes all the things that I include in most of my projects - I created this template to streamline project creation for new projects and ideas.
