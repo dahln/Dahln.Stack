@@ -1,0 +1,49 @@
+name: Cleanup Releases
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 0'
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup-releases:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Delete old releases
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const keepCount = 10;
+            const releases = await github.paginate(github.rest.repos.listReleases, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+
+            releases.sort((a, b) => {
+              return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+            });
+
+            core.info(`Found ${releases.length} releases.`);
+
+            if (releases.length <= keepCount) {
+              core.info(`No releases to delete. Keeping the most recent ${keepCount}.`);
+              return;
+            }
+
+            const releasesToDelete = releases.slice(keepCount);
+            core.info(`Deleting ${releasesToDelete.length} older releases.`);
+
+            for (const release of releasesToDelete) {
+              await github.rest.repos.deleteRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: release.id
+              });
+
+              core.info(`Deleted release ${release.tag_name} (${release.id}).`);
+            }
