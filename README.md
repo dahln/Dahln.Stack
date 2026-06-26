@@ -1,28 +1,31 @@
-[![Build and Release Packages](https://github.com/dahln/Dahln.Stack/actions/workflows/BuildReleasePackages.yml/badge.svg)](https://github.com/dahln/Dahln.Stack/actions/workflows/BuildReleasePackages.yml)
-[![Deploy](https://github.com/dahln/Dahln.Stack/actions/workflows/Deployment.yml/badge.svg)](https://github.com/dahln/Dahln.Stack/actions/workflows/Deployment.yml)
-[![PR Validation](https://github.com/dahln/Dahln.Stack/actions/workflows/pr-validation.yml/badge.svg)](https://github.com/dahln/Dahln.Stack/actions/workflows/pr-validation.yml)
-[![Latest Release](https://img.shields.io/github/v/release/dahln/Dahln.Stack?label=Latest%20Release)](https://github.com/dahln/Dahln.Stack/releases/latest)
+[![Build and Release Packages](https://github.com/dahln/Peach.Stack/actions/workflows/BuildReleasePackages.yml/badge.svg)](https://github.com/dahln/Peach.Stack/actions/workflows/BuildReleasePackages.yml)
+[![Deploy](https://github.com/dahln/Peach.Stack/actions/workflows/Deployment.yml/badge.svg)](https://github.com/dahln/Peach.Stack/actions/workflows/Deployment.yml)
+[![PR Validation](https://github.com/dahln/Peach.Stack/actions/workflows/pr-validation.yml/badge.svg)](https://github.com/dahln/Peach.Stack/actions/workflows/pr-validation.yml)
+[![Latest Release](https://img.shields.io/github/v/release/dahln/Peach.Stack?label=Latest%20Release)](https://github.com/dahln/Peach.Stack/releases/latest)
 
 
 **Demo**: https://web.dahln.com
 
 ## Overview
-Dahln.Stack is am Opinionated .NET 10 + React starter template using a **decoupled proxy** architecture. This template includes all the things that I include in most of my projects - I created this template to streamline project creation for new projects and ideas.
+Peach.Stack is an opinionated .NET 10 + React starter template using a **decoupled proxy** architecture. This template includes all the things that I include in most of my projects - I created this template to streamline project creation for new projects and ideas.
 
 ## 2026 Announcement & Update
-With the latest updates, I have decided to refocus this template project on React. Working with Blazor WASM is fun, and I'm passionate about Blazor. However, over the past 2 years the only Blazor work I have done has been my own 'passion projects', and even some of those projects are now in React. I'm rebranding the project to 'Dahln.Stack', emphasizing that this is my preferred stack choice, at the moment. This rename will make future technology pivots more fluid. I have branched the current Blazor version and will keep that, and other archived branches, as a reference. Until recently my changes have been in another branch, and in order to finish the template restructuring I must now bring them into the master branch - your patience is appreciated while I finalize my current changes.
+With the latest updates, I have decided to refocus this template project on React. Working with Blazor WASM is fun, and I'm passionate about Blazor. However, over the past 2 years the only Blazor work I have done has been my own 'passion projects', and even some of those projects are now in React. I'm rebranding the project to 'Peach.Stack', emphasizing that this is my preferred stack choice, at the moment. This rename will make future technology pivots more fluid. I have branched the current Blazor version and will keep that, and other archived branches, as a reference. Until recently my changes have been in another branch, and in order to finish the template restructuring I must now bring them into the master branch - your patience is appreciated while I finalize my current changes.
+
+## Peach?
+Peaches are delicious. And cheeky.
 
 ## Solution Layout
-- `Dahln.Stack.API`: ASP.NET Core Web API, controllers, and Identity endpoints
-- `Dahln.Stack.App`: React + Vite frontend
-- `Dahln.Stack.Service`: business logic and database orchestration
-- `Dahln.Stack.Database`: EF Core DbContext, entities, and migrations
-- `Dahln.Stack.Dto`: shared DTOs and enums
-- `Dahln.Stack.Test`: unit tests for service logic
+- `Peach.Stack.API`: ASP.NET Core Web API, controllers, and Identity endpoints
+- `Peach.Stack.App`: React + Vite frontend
+- `Peach.Stack.Service`: business logic and database orchestration
+- `Peach.Stack.Database`: EF Core DbContext, entities, and migrations
+- `Peach.Stack.Dto`: shared DTOs and enums
+- `Peach.Stack.Test`: unit tests for service logic
 
 Note: The API and frontend run as independent processes during development and are deployed as separate applications behind Nginx in production.
 
-![Architecture-Image](https://github.com/dahln/Dahln.Stack/blob/b2723fc1f21b5b9b75edf0678ff45065da551ca1/ArchitectureDiagram.png)
+![Architecture-Image](https://github.com/dahln/Peach.Stack/blob/b2723fc1f21b5b9b75edf0678ff45065da551ca1/ArchitectureDiagram.png)
 
 
 
@@ -42,7 +45,7 @@ Two terminals are required.
 ### Terminal 1 - API
 
 ```
-dotnet run --project Dahln.Stack.API\Dahln.Stack.API.csproj --launch-profile https
+dotnet run --project Peach.Stack.API\Peach.Stack.API.csproj --launch-profile https
 ```
 
 API runs at: **https://localhost:7001**  
@@ -51,7 +54,7 @@ Scalar API docs (dev only): **https://localhost:7001/scalar**
 ### Terminal 2 - Frontend
 
 ```
-cd Dahln.Stack.App
+cd Peach.Stack.App
 npm install        # first time only
 npm run dev
 ```
@@ -87,24 +90,24 @@ Without SMTP configuration, the application still runs, but email-dependent acco
 Run these from the solution root:
 
 ```
-dotnet ef migrations add InitialCreate --project Dahln.Stack.Database --startup-project Dahln.Stack.API
+dotnet ef migrations add InitialCreate --project Peach.Stack.Database --startup-project Peach.Stack.API
 ```
 
 ```
-dotnet ef database update --project Dahln.Stack.Database --startup-project Dahln.Stack.API
+dotnet ef database update --project Peach.Stack.Database --startup-project Peach.Stack.API
 ```
 
 ## Ignore Local App Settings Changes
 If you want to keep local configuration changes out of git:
 
 ```
-git update-index --assume-unchanged .\Dahln.Stack.API\appsettings.json
+git update-index --assume-unchanged .\Peach.Stack.API\appsettings.json
 ```
 
 To reverse it:
 
 ```
-git update-index --no-assume-unchanged .\Dahln.Stack.API\appsettings.json
+git update-index --no-assume-unchanged .\Peach.Stack.API\appsettings.json
 ```
 
 ## Deployment

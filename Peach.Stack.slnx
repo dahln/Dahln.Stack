@@ -1,0 +1,13 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="Peach.Stack.API/Peach.Stack.API.csproj" />
+  <Project Path="Peach.Stack.Database/Peach.Stack.Database.csproj" />
+  <Project Path="Peach.Stack.Dto/Peach.Stack.Dto.csproj" />
+  <Project Path="Peach.Stack.Service/Peach.Stack.Service.csproj" />
+  <Project Path="Peach.Stack.Test/Peach.Stack.Test.csproj" />
+</Solution>
+
