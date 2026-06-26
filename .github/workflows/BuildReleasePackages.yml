@@ -18,15 +18,15 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '22'
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.0.x'
 
@@ -59,13 +59,13 @@ jobs:
           generate_release_notes: true
 
       - name: Upload API x64 Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: api-x64
           path: Peach.Stack.API-v${{ steps.version.outputs.VERSION }}-linux-x64.zip
 
       - name: Upload App Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: app
           path: Peach.Stack.App-v${{ steps.version.outputs.VERSION }}.zip
