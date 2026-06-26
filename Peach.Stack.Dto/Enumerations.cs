@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Reflection;
 
-namespace Dahln.Stack.Dto
+namespace Peach.Stack.Dto
 {
     public enum Gender
     {

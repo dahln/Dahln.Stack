@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using System.Security.Principal;
 
-namespace Dahln.Stack.API.Utility
+namespace Peach.Stack.API.Utility
 {
     public static class UserUtility
     {

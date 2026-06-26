@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-         <ProjectReference Include="..\Dahln.Stack.Service\Dahln.Stack.Service.csproj" />
+         <ProjectReference Include="..\Peach.Stack.Service\Peach.Stack.Service.csproj" />
        </ItemGroup>
 </Project>
 

@@ -13,7 +13,7 @@
 	</ItemGroup>
 	
 	<ItemGroup>
-       <ProjectReference Include="..\Dahln.Stack.Database\Dahln.Stack.Database.csproj" />
+       <ProjectReference Include="..\Peach.Stack.Database\Peach.Stack.Database.csproj" />
 	</ItemGroup>
     <ItemGroup>
 		<PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />

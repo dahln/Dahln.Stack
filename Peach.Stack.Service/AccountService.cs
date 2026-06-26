@@ -1,9 +1,9 @@
-using Dahln.Stack.Database;
-using Dahln.Stack.Dto;
+using Peach.Stack.Database;
+using Peach.Stack.Dto;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace Dahln.Stack.Services;
+namespace Peach.Stack.Services;
 
 /// <summary>
 /// Centralizes account lifecycle, admin workflows, and system-settings coordination.

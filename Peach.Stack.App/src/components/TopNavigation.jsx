@@ -2,9 +2,9 @@ import './TopNavigation.css'
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import DahlnStackLogo from './DahlnStackLogo'
+import PeachStackLogo from './PeachStackLogo'
 
-const THEME_STORAGE_KEY = 'dahln.stack.theme'
+const THEME_STORAGE_KEY = 'Peach.Stack.theme'
 
 function readInitialTheme() {
   const fallbackTheme = 'light'
@@ -162,8 +162,8 @@ export default function TopNavigation() {
           to="/"
           className="navbar-brand ms-2 d-inline-flex align-items-center gap-2 text-white"
         >
-          <DahlnStackLogo className="top-nav-brand-logo" />
-          <span className=" brand-name text-white">DAHLN.STACK</span>
+          <PeachStackLogo className="top-nav-brand-logo" />
+          <span className=" brand-name text-white">Peach.Stack</span>
         </Link>
 
         {/* Hamburger toggle button  -  only visible on small screens. */}

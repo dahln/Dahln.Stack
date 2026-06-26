@@ -1,10 +1,10 @@
-namespace Dahln.Stack.Dto
+namespace Peach.Stack.Dto
 {
     public class Search
     {
         public Search()
         {
-            SortDirection = Dahln.Stack.Dto.SortDirection.Ascending;
+            SortDirection = Peach.Stack.Dto.SortDirection.Ascending;
         }
         public string? FilterText { get; set; }
         public int Page { get; set; } = 0;

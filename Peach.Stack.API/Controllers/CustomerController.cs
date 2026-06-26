@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Dahln.Stack.API.Utility;
-using Dahln.Stack.Database;
+using Peach.Stack.API.Utility;
+using Peach.Stack.Database;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
-using Dahln.Stack.Services;
+using Peach.Stack.Services;
 
-namespace Dahln.Stack.API.Controllers;
+namespace Peach.Stack.API.Controllers;
 
 [ApiController]
 /// <summary>

@@ -99,7 +99,7 @@ export default function AccountPage() {
         return
       }
 
-      const otpAuthUri = `otpauth://totp/Dahln.Stack:${auth.user.email}?secret=${twoFactorSharedKey}&issuer=Dahln.Stack&digits=6`
+      const otpAuthUri = `otpauth://totp/Peach.Stack:${auth.user.email}?secret=${twoFactorSharedKey}&issuer=Peach.Stack&digits=6`
 
       const generatedAsset = await qrPeachApi.Generate(
         {

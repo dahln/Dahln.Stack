@@ -22,7 +22,7 @@
 
 
   <ItemGroup>
-    <ProjectReference Include="..\Dahln.Stack.Dto\Dahln.Stack.Dto.csproj" />
+    <ProjectReference Include="..\Peach.Stack.Dto\Peach.Stack.Dto.csproj" />
   </ItemGroup>
 
 </Project>

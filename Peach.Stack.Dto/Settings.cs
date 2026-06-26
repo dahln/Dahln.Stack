@@ -1,4 +1,4 @@
-namespace Dahln.Stack.Dto;
+namespace Peach.Stack.Dto;
 
 public class SystemSettings
 {

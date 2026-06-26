@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace Dahln.Stack.Database
+namespace Peach.Stack.Database
 {
     public class ApplicationDbContext : IdentityDbContext<IdentityUser>
     {

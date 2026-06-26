@@ -1,6 +1,6 @@
-using Dahln.Stack.Database;
-using Dahln.Stack.Services;
-using Dahln.Stack.Dto;
+using Peach.Stack.Database;
+using Peach.Stack.Services;
+using Peach.Stack.Dto;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.InMemory;
 using System.Threading.Tasks;
@@ -12,7 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Dahln.Stack.Test;
+namespace Peach.Stack.Test;
 
 
 [TestClass]
@@ -144,7 +144,7 @@ public class AccountServiceTests
 
         await service.Register("deleteuser@example.com", "Password123!");
         var user = db.Users.First(u => u.Email == "deleteuser@example.com");
-        db.Customers.Add(new Dahln.Stack.Database.Customer { OwnerId = user.Id, Name = "TestCustomer" });
+        db.Customers.Add(new Peach.Stack.Database.Customer { OwnerId = user.Id, Name = "TestCustomer" });
         db.SaveChanges();
         await service.DeleteAccount(user.Id);
         Assert.IsNull(db.Users.FirstOrDefault(u => u.Id == user.Id));

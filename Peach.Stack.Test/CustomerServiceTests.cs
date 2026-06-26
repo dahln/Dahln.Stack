@@ -1,6 +1,6 @@
-using Dahln.Stack.Database;
-using Dahln.Stack.Services;
-using Dahln.Stack.Dto;
+using Peach.Stack.Database;
+using Peach.Stack.Services;
+using Peach.Stack.Dto;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.InMemory;
 using System.Threading.Tasks;
@@ -12,7 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Dahln.Stack.Test;
+namespace Peach.Stack.Test;
 
 [TestClass]
 public class CustomerServiceTests
@@ -39,7 +39,7 @@ public class CustomerServiceTests
         var userId = "user1";
 
         //Test Create
-        var customer = new Dahln.Stack.Dto.Customer { Name = "Test Customer", Email = "test@example.com" };
+        var customer = new Peach.Stack.Dto.Customer { Name = "Test Customer", Email = "test@example.com" };
         var customerId = await service.CreateCustomerAsync(customer, userId);
         Assert.IsNotNull(customerId);
 
@@ -55,7 +55,7 @@ public class CustomerServiceTests
         var db = GetInMemoryDbContext();
         var service = GetCustomerService(db);
         var userId = "user1";
-        var customer = new Dahln.Stack.Dto.Customer { Name = "Old Name", Email = "old@example.com" };
+        var customer = new Peach.Stack.Dto.Customer { Name = "Old Name", Email = "old@example.com" };
 
         //Test Create
         var customerId = await service.CreateCustomerAsync(customer, userId);
@@ -81,7 +81,7 @@ public class CustomerServiceTests
         var service = GetCustomerService(db);
         var userId = "user1";
 
-        var customer = new Dahln.Stack.Dto.Customer { Name = "To Delete", Email = "delete@example.com" };
+        var customer = new Peach.Stack.Dto.Customer { Name = "To Delete", Email = "delete@example.com" };
 
         //Test Create and Delete new customer
         var customerId = await service.CreateCustomerAsync(customer, userId);

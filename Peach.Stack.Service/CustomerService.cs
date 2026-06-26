@@ -1,7 +1,7 @@
-using Dahln.Stack.Database;
+using Peach.Stack.Database;
 using Microsoft.EntityFrameworkCore;
 
-namespace Dahln.Stack.Services;
+namespace Peach.Stack.Services;
 
 public class CustomerService
 {

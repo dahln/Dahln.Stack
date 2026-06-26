@@ -1,5 +1,5 @@
 ### API Path for Local.
-@Dahln.Stack.API_HostAddress = https://localhost:7267
+@Peach.Stack.API_HostAddress = https://localhost:7267
 
 
 
@@ -9,7 +9,7 @@
 
 
 ### Register with 'Regular' user
-POST {{Dahln.Stack.API_HostAddress}}/register
+POST {{Peach.Stack.API_HostAddress}}/register
 Content-Type: application/json
 
 {
@@ -18,7 +18,7 @@ Content-Type: application/json
 }
 
 ### Login with Cookies as 'Regular' user
-POST {{Dahln.Stack.API_HostAddress}}/login?useCookies=true&useSessionCookies=true
+POST {{Peach.Stack.API_HostAddress}}/login?useCookies=true&useSessionCookies=true
 Content-Type: application/json
 
 {
@@ -28,7 +28,7 @@ Content-Type: application/json
 
 
 ### Register with 'Administrator' user
-POST {{Dahln.Stack.API_HostAddress}}/register
+POST {{Peach.Stack.API_HostAddress}}/register
 Content-Type: application/json
 
 {
@@ -37,7 +37,7 @@ Content-Type: application/json
 }
 
 ### Login with Cookies as 'Administrator' user
-POST {{Dahln.Stack.API_HostAddress}}/login?useCookies=true&useSessionCookies=true
+POST {{Peach.Stack.API_HostAddress}}/login?useCookies=true&useSessionCookies=true
 Content-Type: application/json
 
 {
@@ -48,17 +48,17 @@ Content-Type: application/json
 
 
 ### Logout
-GET {{Dahln.Stack.API_HostAddress}}/api/v1/account/logout
+GET {{Peach.Stack.API_HostAddress}}/api/v1/account/logout
 Content-Type: application/json
 
 
 
 ### Confirm Email Address. Pass userId and code as query parameters.
-GET {{Dahln.Stack.API_HostAddress}}/confirmEmail?userId=[USER-ID]&code=[CODE]
+GET {{Peach.Stack.API_HostAddress}}/confirmEmail?userId=[USER-ID]&code=[CODE]
 
 
 ### Resend confirmation email. POST The email address of the user that needs to 
-POST {{Dahln.Stack.API_HostAddress}}/resendConfirmationEmail
+POST {{Peach.Stack.API_HostAddress}}/resendConfirmationEmail
 Content-Type: application/json
 
 {
@@ -69,7 +69,7 @@ Content-Type: application/json
 ### User fotgot their password. POST their email and to send them a recovery email.
 ### IMPORTANT: A user must have 'Confirmed' their email before doing a password forget/reset.
 ### IMPORTANT: Prior to sending this request call /api/v1/account/operations/recovery to see if the Email System is configured.
-POST {{Dahln.Stack.API_HostAddress}}/forgotPassword
+POST {{Peach.Stack.API_HostAddress}}/forgotPassword
 Content-Type: application/json
 
 {
@@ -77,7 +77,7 @@ Content-Type: application/json
 }
 
 ### Received an email with the 'ResetCode' Send the reset code, their current Email address, and the new password.
-POST {{Dahln.Stack.API_HostAddress}}/resetpassword
+POST {{Peach.Stack.API_HostAddress}}/resetpassword
 Content-Type: application/json
 
 {
@@ -88,13 +88,13 @@ Content-Type: application/json
 
 
 ### Get the current user's Email and info.
-GET {{Dahln.Stack.API_HostAddress}}/manage/info
+GET {{Peach.Stack.API_HostAddress}}/manage/info
 Content-Type: application/json
 
 
 
 ### Allow the current user to change their password. 
-POST {{Dahln.Stack.API_HostAddress}}/manage/info
+POST {{Peach.Stack.API_HostAddress}}/manage/info
 Content-Type: application/json
 
 {
@@ -113,7 +113,7 @@ Content-Type: application/json
 #   "isTwoFactorEnabled": false,
 #   "isMachineRemembered": false
 # }
-POST {{Dahln.Stack.API_HostAddress}}/manage/2fa
+POST {{Peach.Stack.API_HostAddress}}/manage/2fa
 Content-Type: application/json
 
 {
@@ -128,7 +128,7 @@ Content-Type: application/json
 
 # var qrContent = string.Format(
 #                     authenticatorUriFormat,
-#                     "Dahln.Stack",
+#                     "Peach.Stack",
 #                     CurrentEmail,
 #                     code);
 
@@ -161,7 +161,7 @@ Content-Type: application/json
 #   "isTwoFactorEnabled": true,
 #   "isMachineRemembered": false
 #### }
-POST {{Dahln.Stack.API_HostAddress}}/manage/2fa
+POST {{Peach.Stack.API_HostAddress}}/manage/2fa
 Content-Type: application/json
 
 {
@@ -175,7 +175,7 @@ Content-Type: application/json
 
 ### 2FA Setup: Step 5: Login. Refer to login requests up above, but now you need to pass the 2fa code from the authenticator app.
 ### If a 2fa-enabled user attempts to sign in without their 2fa code, they will get a 401 response, and the "detail" will say: "RequiresTwoFactor"
-POST {{Dahln.Stack.API_HostAddress}}/login?useCookies=true&useSessionCookies=true
+POST {{Peach.Stack.API_HostAddress}}/login?useCookies=true&useSessionCookies=true
 Content-Type: application/json
 
 {
@@ -186,7 +186,7 @@ Content-Type: application/json
 
 
 ### 2FA: Use a recovery 2FA code:
-POST {{Dahln.Stack.API_HostAddress}}/login?useCookies=true&useSessionCookies=true
+POST {{Peach.Stack.API_HostAddress}}/login?useCookies=true&useSessionCookies=true
 Content-Type: application/json
 
 {
@@ -198,7 +198,7 @@ Content-Type: application/json
 
 
 ### 2FA: Disable 2FA
-POST {{Dahln.Stack.API_HostAddress}}/manage/2fa
+POST {{Peach.Stack.API_HostAddress}}/manage/2fa
 Content-Type: application/json
 
 {
@@ -209,15 +209,15 @@ Content-Type: application/json
 ################################## SUPPLEMENTAL IDENTITY METHODS
 
 ### Logout
-GET {{Dahln.Stack.API_HostAddress}}/api/v1/account/logout
+GET {{Peach.Stack.API_HostAddress}}/api/v1/account/logout
 Content-Type: application/json
 
 ### Delete Current Account
-DELETE {{Dahln.Stack.API_HostAddress}}/api/v1/account
+DELETE {{Peach.Stack.API_HostAddress}}/api/v1/account
 Content-Type: application/json
 
 ### Does Account Exist
-POST {{Dahln.Stack.API_HostAddress}}/api/v1/account/exists
+POST {{Peach.Stack.API_HostAddress}}/api/v1/account/exists
 Content-Type: application/json
 
 {
@@ -225,33 +225,33 @@ Content-Type: application/json
 }
 
 ### Check to see if account recovery operations are allowed - reviews a valid Email System integration (SMTP2GO API).
-GET {{Dahln.Stack.API_HostAddress}}/api/v1/account/operations/recovery
+GET {{Peach.Stack.API_HostAddress}}/api/v1/account/operations/recovery
 Content-Type: application/json
 
 
 ### Get current user roles.
-GET {{Dahln.Stack.API_HostAddress}}/api/v1/account/roles
+GET {{Peach.Stack.API_HostAddress}}/api/v1/account/roles
 Content-Type: application/json
 
 
 ### Check if current user has 2FA enabled
-GET {{Dahln.Stack.API_HostAddress}}/api/v1/account/2fa
+GET {{Peach.Stack.API_HostAddress}}/api/v1/account/2fa
 Content-Type: application/json
 
 
 ### Administrator: Toggle the user as an administrator or disable.
-GET {{Dahln.Stack.API_HostAddress}}/api/v1/user/[USER-ID]/role/administrator
+GET {{Peach.Stack.API_HostAddress}}/api/v1/user/[USER-ID]/role/administrator
 Content-Type: application/json
 
 
 ### Administrator: Delete user by Id
-DELETE {{Dahln.Stack.API_HostAddress}}/api/v1/user/[USER-ID]
+DELETE {{Peach.Stack.API_HostAddress}}/api/v1/user/[USER-ID]
 Content-Type: application/json
 
 
 ### Administrator: Update system settings with email config
 ### TODO: Setup your own SMTP2GO account and add your SMTP2GO key and the email address you will use to send emails from the system.
-PUT {{Dahln.Stack.API_HostAddress}}/api/v1/settings
+PUT {{Peach.Stack.API_HostAddress}}/api/v1/settings
 Content-Type: application/json
 
 {
@@ -261,7 +261,7 @@ Content-Type: application/json
 
 
 ### Administrator: Update just the System Email Address.
-PUT {{Dahln.Stack.API_HostAddress}}/api/v1/settings
+PUT {{Peach.Stack.API_HostAddress}}/api/v1/settings
 Content-Type: application/json
 
 {
@@ -271,7 +271,7 @@ Content-Type: application/json
 
 
 ### Administrator: Update just the System Email Address.
-PUT {{Dahln.Stack.API_HostAddress}}/api/v1/settings
+PUT {{Peach.Stack.API_HostAddress}}/api/v1/settings
 Content-Type: application/json
 
 {
@@ -281,7 +281,7 @@ Content-Type: application/json
 
 
 ### Administrator: Clear system settings by passing null.
-PUT {{Dahln.Stack.API_HostAddress}}/api/v1/settings
+PUT {{Peach.Stack.API_HostAddress}}/api/v1/settings
 Content-Type: application/json
 
 {
@@ -291,12 +291,12 @@ Content-Type: application/json
 
 
 ### Administrator: Get the current system settings, useful for a page that would mange system settings.
-GET {{Dahln.Stack.API_HostAddress}}/api/v1/settings
+GET {{Peach.Stack.API_HostAddress}}/api/v1/settings
 Content-Type: application/json
 
 
 ### Administrator: Search Users
-POST {{Dahln.Stack.API_HostAddress}}/api/v1/users
+POST {{Peach.Stack.API_HostAddress}}/api/v1/users
 Content-Type: application/json
 
 {
@@ -326,7 +326,7 @@ Content-Type: application/json
 # 5. SortDirection values: 0 = Ascending, 1 = Descending
 
 ### Create a new Customer
-POST {{Dahln.Stack.API_HostAddress}}/api/v1/customer
+POST {{Peach.Stack.API_HostAddress}}/api/v1/customer
 Content-Type: application/json
 
 {
@@ -345,11 +345,11 @@ Content-Type: application/json
 }
 
 ### Get Customer by ID (replace {customerId} with actual ID from create response)
-GET {{Dahln.Stack.API_HostAddress}}/api/v1/customer/[CUSTOMER-ID]
+GET {{Peach.Stack.API_HostAddress}}/api/v1/customer/[CUSTOMER-ID]
 Accept: application/json
 
 ### Update Customer by ID (replace {customerId} with actual ID)
-PUT {{Dahln.Stack.API_HostAddress}}/api/v1/customer/[CUSTOMER-ID]
+PUT {{Peach.Stack.API_HostAddress}}/api/v1/customer/[CUSTOMER-ID]
 Content-Type: application/json
 
 {
@@ -368,11 +368,11 @@ Content-Type: application/json
 }
 
 ### Delete Customer by ID (replace {customerId} with actual ID)
-DELETE {{Dahln.Stack.API_HostAddress}}/api/v1/customer/[CUSTOMER-ID]
+DELETE {{Peach.Stack.API_HostAddress}}/api/v1/customer/[CUSTOMER-ID]
 Accept: application/json
 
 ### Search Customers with filtering
-POST {{Dahln.Stack.API_HostAddress}}/api/v1/customers
+POST {{Peach.Stack.API_HostAddress}}/api/v1/customers
 Content-Type: application/json
 
 {
@@ -384,7 +384,7 @@ Content-Type: application/json
 }
 
 ### Search Customers - Get all customers (no filter)
-POST {{Dahln.Stack.API_HostAddress}}/api/v1/customers
+POST {{Peach.Stack.API_HostAddress}}/api/v1/customers
 Content-Type: application/json
 
 {
@@ -396,7 +396,7 @@ Content-Type: application/json
 }
 
 ### Search Customers - Sort by State descending
-POST {{Dahln.Stack.API_HostAddress}}/api/v1/customers
+POST {{Peach.Stack.API_HostAddress}}/api/v1/customers
 Content-Type: application/json
 
 {
@@ -408,7 +408,7 @@ Content-Type: application/json
 }
 
 ### Search Customers - Sort by Gender ascending
-POST {{Dahln.Stack.API_HostAddress}}/api/v1/customers
+POST {{Peach.Stack.API_HostAddress}}/api/v1/customers
 Content-Type: application/json
 
 {
@@ -420,7 +420,7 @@ Content-Type: application/json
 }
 
 ### Search Customers - Sort by Active status
-POST {{Dahln.Stack.API_HostAddress}}/api/v1/customers
+POST {{Peach.Stack.API_HostAddress}}/api/v1/customers
 Content-Type: application/json
 
 {
@@ -432,6 +432,6 @@ Content-Type: application/json
 }
 
 ### Seed Customers with specific number
-GET {{Dahln.Stack.API_HostAddress}}/api/v1/seed/customers/10
+GET {{Peach.Stack.API_HostAddress}}/api/v1/seed/customers/10
 Accept: application/json
 
