@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      APPLICATION_NAME: ${{ secrets.APPLICATIONNAME }}
     outputs:
       version: ${{ steps.version.outputs.VERSION }}
 
@@ -39,33 +41,33 @@ jobs:
           dotnet publish Peach.Stack.API/Peach.Stack.API.csproj \
             -c Release -r linux-x64 --self-contained true \
             -p:PublishSingleFile=true -o ./publish-api-x64
-          cd publish-api-x64 && zip -r ../Peach.Stack.API-v${{ steps.version.outputs.VERSION }}-linux-x64.zip .
+          cd publish-api-x64 && zip -r ../$APPLICATION_NAME.API-v${{ steps.version.outputs.VERSION }}-linux-x64.zip .
 
       - name: Build React App
         run: |
           cd Peach.Stack.App
           npm install
           npm run build
-          cd dist && zip -r ../../Peach.Stack.App-v${{ steps.version.outputs.VERSION }}.zip .
+          cd dist && zip -r ../../$APPLICATION_NAME.App-v${{ steps.version.outputs.VERSION }}.zip .
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.VERSION }}
-          name: Peach.Stack v${{ steps.version.outputs.VERSION }}
+          name: ${{ env.APPLICATION_NAME }} v${{ steps.version.outputs.VERSION }}
           files: |
-            Peach.Stack.API-v${{ steps.version.outputs.VERSION }}-linux-x64.zip
-            Peach.Stack.App-v${{ steps.version.outputs.VERSION }}.zip
+            ${{ env.APPLICATION_NAME }}.API-v${{ steps.version.outputs.VERSION }}-linux-x64.zip
+            ${{ env.APPLICATION_NAME }}.App-v${{ steps.version.outputs.VERSION }}.zip
           generate_release_notes: true
 
       - name: Upload API x64 Artifact
         uses: actions/upload-artifact@v4
         with:
           name: api-x64
-          path: Peach.Stack.API-v${{ steps.version.outputs.VERSION }}-linux-x64.zip
+          path: ${{ env.APPLICATION_NAME }}.API-v${{ steps.version.outputs.VERSION }}-linux-x64.zip
 
       - name: Upload App Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app
-          path: Peach.Stack.App-v${{ steps.version.outputs.VERSION }}.zip
+          path: ${{ env.APPLICATION_NAME }}.App-v${{ steps.version.outputs.VERSION }}.zip
