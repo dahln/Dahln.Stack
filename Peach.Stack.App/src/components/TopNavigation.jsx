@@ -163,7 +163,7 @@ export default function TopNavigation() {
           className="navbar-brand ms-2 d-inline-flex align-items-center gap-2 text-white"
         >
           <PeachStackLogo className="top-nav-brand-logo" />
-          <span className=" brand-name text-white">Peach.Stack</span>
+          <span className=" brand-name text-white">PEACH.STACK</span>
         </Link>
 
         {/* Hamburger toggle button  -  only visible on small screens. */}
