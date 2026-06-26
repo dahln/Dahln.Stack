@@ -116,6 +116,8 @@ git update-index --no-assume-unchanged .\Peach.Stack.API\appsettings.json
 
 Deployment runs through the `Deployment.yml` GitHub Actions workflow. It deploys automatically when a GitHub Release is published, and it also runs after `Build and Release Packages` completes successfully. You can still run it manually with `workflow_dispatch`: provide a `release_tag` to deploy a specific release, or leave `release_tag` empty to deploy the latest release.
 
+`BuildReleasePackages.yml` deletes every existing GitHub Release and its tag immediately before publishing the next one. The repository intentionally keeps only the newest packaged release, so older release assets are not retained in GitHub Releases.
+
 The workflow targets Fedora x64, downloads the release assets on the GitHub runner with the built-in `GITHUB_TOKEN`, uploads the packages to the server over SSH, and configures the server in place. No GitHub login or token is left on the server.
 
 Before the first deployment:
@@ -168,4 +170,3 @@ This project uses the Unlicense. See `LICENSE` for the full text.
 ## Resources
 - [Identity API with WebAPI](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity-api-authorization?view=aspnetcore-8.0)
 - [EF Core CLI](https://learn.microsoft.com/en-us/ef/core/cli/dotnet)
-
