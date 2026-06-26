@@ -48,6 +48,46 @@ jobs:
           npm run build
           cd dist && zip -r ../../Peach.Stack.App-v${{ steps.version.outputs.VERSION }}.zip .
 
+      - name: Delete Previous GitHub Releases
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const releases = await github.paginate(github.rest.repos.listReleases, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100,
+            });
+
+            if (releases.length === 0) {
+              core.info('No previous releases found.');
+            }
+
+            for (const release of releases) {
+              core.info(`Deleting release ${release.tag_name} (#${release.id}).`);
+              await github.rest.repos.deleteRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: release.id,
+              });
+
+              if (release.tag_name) {
+                try {
+                  await github.rest.git.deleteRef({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    ref: `tags/${release.tag_name}`,
+                  });
+                  core.info(`Deleted tag ${release.tag_name}.`);
+                } catch (error) {
+                  if (error.status === 404) {
+                    core.warning(`Tag ${release.tag_name} was already missing.`);
+                  } else {
+                    throw error;
+                  }
+                }
+              }
+            }
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
