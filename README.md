@@ -9,6 +9,8 @@
 ## Overview
 Peach.Stack is an opinionated .NET 10 + React starter template using a **decoupled proxy** architecture. This template includes all the things that I include in most of my projects - I created this template to streamline project creation for new projects and ideas.
 
+The project, namespaces, folder, etc. use the 'Peach.Stack' naming convention - if you want to change this you can do a search and replace, or have Copilot do it; both approaches have worked for me.
+
 ## 2026 Announcement & Update
 With the latest updates, I have decided to refocus this template project on React. Working with Blazor WASM is fun, and I'm passionate about Blazor. However, over the past 2 years the only Blazor work I have done has been my own 'passion projects', and even some of those projects are now in React. I'm rebranding the project to 'Peach.Stack', emphasizing that this is my preferred stack choice, at the moment. This rename will make future technology pivots more fluid. I have branched the current Blazor version and will keep that, and other archived branches, as a reference. Until recently my changes have been in another branch, and in order to finish the template restructuring I must now bring them into the master branch - your patience is appreciated while I finalize my current changes.
 
